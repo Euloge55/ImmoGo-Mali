@@ -28,9 +28,9 @@ use App\Http\Controllers\API\VenteController;
 use App\Http\Controllers\API\ModePaiementController;
 use App\Http\Controllers\API\LocalisationController;
 
-// ═══════════════════════════════════════════════════
+
 // ROUTES PUBLIQUES (sans token)
-// ═══════════════════════════════════════════════════
+
 
 // ── LOCALISATION (cascades dépendantes) ──
 Route::get('/departements',                 [LocalisationController::class, 'departements']);
@@ -60,9 +60,9 @@ Route::get('/type-biens',                   [TypeBienController::class, 'index']
 // ── MODES DE PAIEMENT (public pour affichage) ──
 Route::get('/mode-paiements',               [ModePaiementController::class, 'index']);
 
-// ═══════════════════════════════════════════════════
+
 // ROUTES PROTÉGÉES (token Sanctum requis)
-// ═══════════════════════════════════════════════════
+
 Route::middleware('auth:sanctum')->group(function () {
 
     // ── AUTH ──

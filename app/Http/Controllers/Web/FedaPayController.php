@@ -50,7 +50,7 @@ class FedaPayController extends Controller
                 'email'     => $client->email,
                 'phone_number' => [
                     'number'  => $client->tel_client,
-                    'country' => 'BJ',
+                    'country' => 'ML',
                 ],
             ],
         ]);
@@ -95,7 +95,7 @@ class FedaPayController extends Controller
                 'email'     => $client->email,
                 'phone_number' => [
                     'number'  => $client->tel_client,
-                    'country' => 'BJ',
+                    'country' => 'ML',
                 ],
             ],
         ]);
@@ -146,7 +146,7 @@ class FedaPayController extends Controller
                 'email'     => $client->email,
                 'phone_number' => [
                     'number'  => $client->tel_client,
-                    'country' => 'BJ',
+                    'country' => 'ML',
                 ],
             ],
         ]);

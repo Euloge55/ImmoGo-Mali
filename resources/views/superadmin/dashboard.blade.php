@@ -203,7 +203,7 @@
                                 <label class="form-label fw-semibold">Adresse</label>
                                 <input type="text" name="adresse_agence"
                                        class="form-control" required
-                                       placeholder="Ex: Cotonou, Bénin">
+                                       placeholder="Ex: Bamako, Mali">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Téléphone</label>

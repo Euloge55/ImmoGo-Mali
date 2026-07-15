@@ -188,7 +188,7 @@
                 </h1>
                 <p class="fs-5 mb-4 text-white opacity-75">
                     Découvrez des maisons, appartements et terrains
-                    disponibles partout au Bénin.
+                    disponibles partout au Mali.
                 </p>
                 <div class="d-flex gap-3 flex-wrap">
                     <a href="{{ route('biens.index') }}"
@@ -216,13 +216,13 @@
                     <form action="{{ route('biens.index') }}" method="GET"
                           id="searchForm">
 
-                        <!-- DÉPARTEMENT -->
+                        <!-- RÉGION -->
                         <div class="mb-3">
                             <select name="id_departement"
                                     class="form-select"
                                     id="depSearch"
                                     onchange="loadVillesSearch(this.value)">
-                                <option value="">Tous les départements</option>
+                                <option value="">Toutes les régions</option>
                                 @foreach($departements as $dep)
                                     <option value="{{ $dep->id_departement }}">
                                         {{ $dep->nom_departement }}
@@ -267,7 +267,7 @@
                             <input type="number"
                                    name="prix_max"
                                    class="form-control"
-                                   placeholder="Budget maximum (FCFA)">
+                                   placeholder="Budget maximum (CFA)">
                         </div>
 
                         <button type="submit"
@@ -458,7 +458,7 @@
     <div class="container">
         <h2 class="section-title text-center mb-2">Pourquoi choisir ImmoGo ?</h2>
         <p class="text-center text-muted mb-5">
-            La plateforme immobilière de référence au Bénin
+            La plateforme immobilière de référence au Mali
         </p>
         <div class="row g-4">
             <div class="col-md-4 text-center p-4">
@@ -476,8 +476,8 @@
                      style="width:80px; height:80px; background:#e8fffe">
                     <i class="fas fa-map-marked-alt fa-2x" style="color:#4ECDC4"></i>
                 </div>
-                <h5 class="fw-bold">Partout au Bénin</h5>
-                <p class="text-muted">Biens disponibles dans les 12 départements.</p>
+                <h5 class="fw-bold">Partout au Mali</h5>
+                <p class="text-muted">Biens disponibles dans toutes les régions du Mali.</p>
             </div>
             <div class="col-md-4 text-center p-4">
                 <div class="rounded-circle d-inline-flex align-items-center

@@ -184,7 +184,7 @@
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Département</label>
+                            <label class="form-label fw-semibold">Région</label>
                             <select name="id_departement" class="form-select"
                                     required
                                     onchange="loadVillesModal(this.value)">
@@ -202,7 +202,7 @@
                             <select name="id_ville" class="form-select"
                                     id="villeSelectModal" required
                                     onchange="loadQuartiersModal(this.value)">
-                                <option value="">Choisir d'abord un département</option>
+                                <option value="">Choisir d'abord une région</option>
                             </select>
                         </div>
 
@@ -332,7 +332,7 @@
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Département</label>
+                            <label class="form-label fw-semibold">Région</label>
                             <select name="id_departement" class="form-select" required
                                     onchange="loadVillesModifier(
                                     this.value, {{ $bien->id_bien }})">
@@ -359,7 +359,7 @@
                                         {{ $bien->ville->nom_ville }}
                                     </option>
                                 @else
-                                    <option value="">Choisir un département d'abord</option>
+                                    <option value="">Choisir une région d'abord</option>
                                 @endif
                             </select>
                         </div>

@@ -68,13 +68,13 @@
                                value="{{ request('q') }}">
                     </div>
 
-                    <!-- Département -->
+                    <!-- Région -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Département</label>
+                        <label class="form-label fw-semibold small">Région</label>
                         <select name="id_departement"
                                 class="form-select"
                                 onchange="loadVilles(this.value)">
-                            <option value="">Tous</option>
+                            <option value="">Toutes</option>
                             @foreach($departements as $dep)
                                 <option value="{{ $dep->id_departement }}"
                                     {{ request('id_departement') == $dep->id_departement ? 'selected' : '' }}>
@@ -114,7 +114,7 @@
 
                     <!-- Prix -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Prix minimum (FCFA)</label>
+                        <label class="form-label fw-semibold small">Prix minimum (CFA)</label>
                         <input type="number"
                                name="prix_min"
                                class="form-control"
@@ -122,7 +122,7 @@
                                value="{{ request('prix_min') }}">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Prix maximum (FCFA)</label>
+                        <label class="form-label fw-semibold small">Prix maximum (CFA)</label>
                         <input type="number"
                                name="prix_max"
                                class="form-control"
@@ -309,7 +309,7 @@
 
 @section('scripts')
 <script>
-// Charger les villes selon département
+// Charger les villes selon la région
 function loadVilles(idDepartement) {
     const villeSelect = document.getElementById('villeSelect');
     villeSelect.innerHTML = '<option value="">Toutes</option>';

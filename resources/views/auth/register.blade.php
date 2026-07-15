@@ -70,7 +70,7 @@
                                 name="tel_client"
                                 class="form-control @error('tel_client') is-invalid @enderror"
                                 value="{{ old('tel_client') }}"
-                                placeholder="+229 XX XX XX XX"
+                                placeholder="+223 XX XX XX XX"
                             >
                             @error('tel_client')
                                 <div class="invalid-feedback">{{ $message }}</div>

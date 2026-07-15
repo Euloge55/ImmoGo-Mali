@@ -153,7 +153,7 @@
                 </h5>
                 <div class="row">
                     <div class="col-md-4">
-                        <p class="mb-1 text-muted small">Département</p>
+                        <p class="mb-1 text-muted small">Région</p>
                         <p class="fw-semibold">
                             {{ $bien->departement->nom_departement ?? 'N/A' }}
                         </p>

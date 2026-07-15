@@ -176,7 +176,7 @@
                                        @error('adresse_agence') is-invalid @enderror"
                                        value="{{ old('adresse_agence') }}"
                                        required
-                                       placeholder="Ex: Cotonou, Bénin">
+                                       placeholder="Ex: Bamako, Mali">
                                 @error('adresse_agence')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -189,7 +189,7 @@
                                        @error('tel_agence') is-invalid @enderror"
                                        value="{{ old('tel_agence') }}"
                                        required
-                                       placeholder="+229 XX XX XX XX">
+                                       placeholder="+223 XX XX XX XX">
                                 @error('tel_agence')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
