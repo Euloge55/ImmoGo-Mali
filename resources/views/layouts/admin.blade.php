@@ -187,6 +187,15 @@
                         Gérer
                     </span>
                 </a>
+                <a href="{{ route('admin.paiement.config') }}"
+                   class="{{ request()->routeIs('admin.paiement.config') ? 'active' : '' }}">
+                    <i class="fas fa-credit-card"></i> Config Paiement
+                    <span class="ms-auto badge"
+                          style="background:rgba(243,156,18,0.2);
+                                 color:#f39c12; font-size:10px">
+                        CinetPay
+                    </span>
+                </a>
             @endif
 
         @elseif(session('superadmin'))

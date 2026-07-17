@@ -17,7 +17,7 @@ class AdminWebController extends Controller
     private function checkAuth()
     {
         if (!session('admin')) {
-            return redirect()->route('login.admin')
+            return redirect()->route('login')
                            ->with('error', 'Accès réservé aux administrateurs');
         }
         return null;
@@ -183,17 +183,94 @@ class AdminWebController extends Controller
         return back()->with('success', 'Statut modifié avec succès !');
     }
 
+    // ═══ CONFIG PAIEMENT CINETPAY (admin principal uniquement) ═══
+    public function configPaiement()
+    {
+        if ($redirect = $this->checkAuth()) return $redirect;
+
+        if (!session('admin')->est_principal) {
+            return redirect()->route('admin.dashboard')
+                             ->with('error', 'Accès réservé à l\'administrateur principal.');
+        }
+
+        $agence = \App\Models\Agence::find(session('admin')->id_agence);
+        return view('admin.paiement-config', compact('agence'));
+    }
+
+    public function sauvegarderConfigPaiement(Request $request)
+    {
+        if ($redirect = $this->checkAuth()) return $redirect;
+
+        if (!session('admin')->est_principal) {
+            return redirect()->route('admin.dashboard')
+                             ->with('error', 'Accès réservé à l\'administrateur principal.');
+        }
+
+        $request->validate([
+            'cinetpay_site_id' => 'required|string|max:100',
+            'cinetpay_api_key' => 'required|string|max:255',
+            'cinetpay_env'     => 'required|in:TEST,PROD',
+        ]);
+
+        \App\Models\Agence::where('id_agence', session('admin')->id_agence)
+                          ->update([
+                              'cinetpay_site_id' => $request->cinetpay_site_id,
+                              'cinetpay_api_key' => $request->cinetpay_api_key,
+                              'cinetpay_env'     => $request->cinetpay_env,
+                          ]);
+
+        return redirect()->route('admin.paiement.config')
+                         ->with('success', '✅ Configuration CinetPay sauvegardée avec succès !');
+    }
+
     // ═══ GESTION RESERVATIONS ═══
     public function reservations()
     {
         if ($redirect = $this->checkAuth()) return $redirect;
 
-        $contrats = Contrat::with(['bien', 'client', 'paiements', 'location', 'vente'])
+        $query = \App\Models\Contrat::with(['bien', 'client', 'paiements', 'location', 'vente'])
                            ->whereHas('bien', function($q) {
                                $q->where('id_agence', session('admin')->id_agence);
-                           })->latest()->paginate(10);
+                           });
+
+        if (request('statut')) {
+            $query->where('statut_contrat', request('statut'));
+        }
+
+        $contrats = $query->latest()->paginate(10);
 
         return view('admin.reservations', compact('contrats'));
+    }
+
+    public function confirmerReservation($id)
+    {
+        if ($redirect = $this->checkAuth()) return $redirect;
+
+        $contrat = \App\Models\Contrat::whereHas('bien', function($q) {
+                        $q->where('id_agence', session('admin')->id_agence);
+                    })->findOrFail($id);
+
+        $contrat->update(['statut_contrat' => 'confirme']);
+
+        // Mettre à jour le statut du bien
+        $statut = $contrat->type_contrat === 'location' ? 'loue' : 'vendu';
+        $contrat->bien->update(['statut' => $statut]);
+
+        return back()->with('success', 'Réservation confirmée avec succès !');
+    }
+
+    public function annulerReservation($id)
+    {
+        if ($redirect = $this->checkAuth()) return $redirect;
+
+        $contrat = \App\Models\Contrat::whereHas('bien', function($q) {
+                        $q->where('id_agence', session('admin')->id_agence);
+                    })->findOrFail($id);
+
+        $contrat->update(['statut_contrat' => 'annule']);
+        $contrat->bien->update(['statut' => 'disponible']);
+
+        return back()->with('success', 'Réservation annulée. Le bien est de nouveau disponible.');
     }
 
     // ═══ GESTION ADMINISTRATEURS ═══

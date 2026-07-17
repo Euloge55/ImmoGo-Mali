@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Session;
 
 class AuthWebController extends Controller
 {
-    // ═══ INSCRIPTION ═══
+    // ═══ INSCRIPTION CLIENT ═══
     public function showRegister()
     {
         return view('auth.register');
@@ -20,32 +20,44 @@ class AuthWebController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'nom_client'    => 'required|string',
-            'prenom_client' => 'required|string',
+            'nom_client'    => 'required|string|max:100',
+            'prenom_client' => 'required|string|max:100',
             'email'         => 'required|email|unique:clients,email',
-            'tel_client'    => 'required|string',
+            'tel_client'    => 'required|string|max:20',
             'mot_de_passe'  => 'required|min:6|confirmed',
         ]);
 
         $client = Client::create([
             'nom_client'    => $request->nom_client,
             'prenom_client' => $request->prenom_client,
-            'email'         => $request->email,
+            'email'         => strtolower($request->email),
             'tel_client'    => $request->tel_client,
             'mot_de_passe'  => Hash::make($request->mot_de_passe),
         ]);
 
-        // Connecter le client après inscription
         Session::put('client', $client);
-        Session::put('type', 'client');
+        Session::put('role', 'client');
 
         return redirect()->route('home')
                          ->with('success', 'Compte créé avec succès !');
     }
 
-    // ═══ CONNEXION CLIENT ═══
+    // ═══ CONNEXION UNIQUE ═══
+    // Un seul formulaire pour tous les rôles.
+    // Ordre de recherche : SuperAdmin → Administrateur → Client
     public function showLogin()
     {
+        // Si déjà connecté, rediriger vers le bon dashboard
+        if (Session::get('role') === 'superadmin') {
+            return redirect()->route('superadmin.dashboard');
+        }
+        if (Session::get('role') === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+        if (Session::get('role') === 'client') {
+            return redirect()->route('home');
+        }
+
         return view('auth.login');
     }
 
@@ -56,82 +68,78 @@ class AuthWebController extends Controller
             'mot_de_passe' => 'required',
         ]);
 
-        $client = Client::where('email', $request->email)->first();
+        $email    = strtolower(trim($request->email));
+        $password = $request->mot_de_passe;
 
-        if (!$client || !Hash::check($request->mot_de_passe, $client->mot_de_passe)) {
-            return back()->withErrors([
-                'email' => 'Email ou mot de passe incorrect'
-            ])->withInput();
+        // ── 1. Super Admin ──
+        $superAdmin = SuperAdmin::whereRaw('LOWER(email) = ?', [$email])->first();
+        if ($superAdmin && Hash::check($password, $superAdmin->mot_de_passe)) {
+            Session::flush();
+            Session::regenerate();
+            Session::put('superadmin', $superAdmin);
+            Session::put('role', 'superadmin');
+            return redirect()->route('superadmin.dashboard')
+                             ->with('success', 'Bienvenue ' . $superAdmin->nom_superadmin . ' !');
         }
 
-        Session::put('client', $client);
-        Session::put('type', 'client');
-
-        return redirect()->route('home')
-                         ->with('success', 'Connexion réussie !');
-    }
-
-    // ═══ CONNEXION ADMIN ═══
-    public function showLoginAdmin()
-    {
-        return view('auth.login-admin');
-    }
-
-    public function loginAdmin(Request $request)
-    {
-        $request->validate([
-            'email'        => 'required|email',
-            'mot_de_passe' => 'required',
-        ]);
-
-        $admin = Administrateur::where('email', $request->email)->first();
-
-        if (!$admin || !Hash::check($request->mot_de_passe, $admin->mot_de_passe)) {
-            return back()->withErrors([
-                'email' => 'Email ou mot de passe incorrect'
-            ])->withInput();
+        // ── 2. Administrateur d'agence ──
+        $admin = Administrateur::whereRaw('LOWER(email) = ?', [$email])->first();
+        if ($admin && Hash::check($password, $admin->mot_de_passe)) {
+            Session::flush();
+            Session::regenerate();
+            Session::put('admin', $admin);
+            Session::put('role', 'admin');
+            return redirect()->route('admin.dashboard')
+                             ->with('success', 'Bienvenue ' . $admin->prenom_admin . ' !');
         }
 
-        Session::put('admin', $admin);
-        Session::put('type', 'admin');
-
-        return redirect()->route('admin.dashboard')
-                         ->with('success', 'Connexion réussie !');
-    }
-
-    // ═══ CONNEXION SUPER ADMIN ═══
-    public function showLoginSuperAdmin()
-    {
-        return view('auth.login-superadmin');
-    }
-
-    public function loginSuperAdmin(Request $request)
-    {
-        $request->validate([
-            'email'        => 'required|email',
-            'mot_de_passe' => 'required',
-        ]);
-
-        $superAdmin = SuperAdmin::where('email', $request->email)->first();
-
-        if (!$superAdmin || !Hash::check($request->mot_de_passe, $superAdmin->mot_de_passe)) {
-            return back()->withErrors([
-                'email' => 'Email ou mot de passe incorrect'
-            ])->withInput();
+        // ── 3. Client ──
+        $client = Client::whereRaw('LOWER(email) = ?', [$email])->first();
+        if ($client && Hash::check($password, $client->mot_de_passe)) {
+            Session::flush();
+            Session::regenerate();
+            Session::put('client', $client);
+            Session::put('role', 'client');
+            return redirect()->route('home')
+                             ->with('success', 'Bienvenue ' . $client->prenom_client . ' !');
         }
 
-        Session::put('superadmin', $superAdmin);
-        Session::put('type', 'superadmin');
-
-        return redirect()->route('superadmin.dashboard')
-                         ->with('success', 'Connexion réussie !');
+        // ── Aucun match ──
+        return back()
+            ->withErrors(['email' => 'Email ou mot de passe incorrect.'])
+            ->withInput(['email' => $request->email]);
     }
 
     // ═══ DECONNEXION ═══
     public function logout()
     {
         Session::flush();
+        Session::regenerate();
         return redirect()->route('login')
-                         ->with('success', 'Déconnexion réussie !');
+                         ->with('success', 'Vous êtes déconnecté.');
+    }
+
+    // ─────────────────────────────────────────────
+    // Anciennes routes conservées pour compatibilité
+    // (redirigent toutes vers /connexion)
+    // ─────────────────────────────────────────────
+    public function showLoginAdmin()
+    {
+        return redirect()->route('login');
+    }
+
+    public function loginAdmin(Request $request)
+    {
+        return $this->login($request);
+    }
+
+    public function showLoginSuperAdmin()
+    {
+        return redirect()->route('login');
+    }
+
+    public function loginSuperAdmin(Request $request)
+    {
+        return $this->login($request);
     }
 }

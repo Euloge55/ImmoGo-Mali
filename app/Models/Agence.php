@@ -7,7 +7,8 @@ class Agence extends Model
     protected $primaryKey = 'id_agence';
     protected $fillable = [
         'id_superadmin', 'nom_agence', 'adresse_agence',
-        'tel_agence', 'email', 'logo'
+        'tel_agence', 'email', 'logo',
+        'cinetpay_site_id', 'cinetpay_api_key', 'cinetpay_env',
     ];
 
     public function superAdmin()

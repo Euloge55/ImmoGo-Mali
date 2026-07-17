@@ -192,8 +192,8 @@
 
                 @if($bien->statut === 'disponible')
                     @if(session('client'))
-                    <!-- BOUTON RÉSERVER avec FedaPay -->
-                    <form action="{{ route('fedapay.acompte') }}" method="POST">
+                    <!-- BOUTON RÉSERVER avec CinetPay -->
+                    <form action="{{ route('cinetpay.acompte') }}" method="POST">
                         @csrf
                         <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
                         <div class="mb-3">
@@ -207,12 +207,12 @@
                                 class="btn w-100 py-3 fw-semibold mb-2"
                                 style="background:#4ECDC4; color:white; border-radius:12px">
                             <i class="fas fa-calendar-check me-2"></i>
-                            Réserver — Payer acompte ({{ number_format($bien->prix * 0.10, 0, ',', ' ') }} FCFA)
+                            Réserver — Payer acompte ({{ number_format($bien->prix * 0.10, 0, ',', ' ') }} CFA)
                         </button>
                     </form>
 
-                    <!-- BOUTON PAYER TOTAL avec FedaPay -->
-                    <form action="{{ route('fedapay.total') }}" method="POST">
+                    <!-- BOUTON PAYER TOTAL avec CinetPay -->
+                    <form action="{{ route('cinetpay.total') }}" method="POST">
                         @csrf
                         <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
                         <input type="hidden" name="type_contrat" value="vente">
@@ -220,7 +220,7 @@
                                 class="btn w-100 py-3 fw-semibold btn-outline-success"
                                 style="border-radius:12px">
                             <i class="fas fa-credit-card me-2"></i>
-                            Payer la totalité ({{ number_format($bien->prix, 0, ',', ' ') }} FCFA)
+                            Payer la totalité ({{ number_format($bien->prix, 0, ',', ' ') }} CFA)
                         </button>
                     </form>
                 @endif

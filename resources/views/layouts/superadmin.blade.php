@@ -149,6 +149,16 @@
             <i class="fas fa-building"></i> Agences
         </a>
 
+        <a href="{{ route('superadmin.clients') }}"
+           class="{{ request()->routeIs('superadmin.clients') ? 'active' : '' }}">
+            <i class="fas fa-users"></i> Clients
+        </a>
+
+        <a href="{{ route('superadmin.contrats') }}"
+           class="{{ request()->routeIs('superadmin.contrats') ? 'active' : '' }}">
+            <i class="fas fa-file-contract"></i> Contrats
+        </a>
+
         <hr style="border-color:rgba(255,255,255,0.1); margin:15px 20px">
         <div class="sidebar-section-title">Compte</div>
 

@@ -16,7 +16,7 @@ class SuperAdminWebController extends Controller
     private function checkAuth()
     {
         if (!session('superadmin')) {
-            return redirect()->route('login.superadmin')
+            return redirect()->route('login')
                            ->with('error', 'Accès réservé au super administrateur');
         }
         return null;
@@ -141,7 +141,12 @@ class SuperAdminWebController extends Controller
     {
         if ($redirect = $this->checkAuth()) return $redirect;
 
-        $clients = Client::latest()->paginate(10);
+        $search  = request('q');
+        $clients = \App\Models\Client::when($search, function($q) use ($search) {
+                        $q->where('nom_client', 'like', "%$search%")
+                          ->orWhere('prenom_client', 'like', "%$search%")
+                          ->orWhere('email', 'like', "%$search%");
+                    })->withCount('contrats')->latest()->paginate(15);
 
         return view('superadmin.clients', compact('clients'));
     }
@@ -150,8 +155,26 @@ class SuperAdminWebController extends Controller
     {
         if ($redirect = $this->checkAuth()) return $redirect;
 
-        Client::findOrFail($id)->delete();
+        \App\Models\Client::findOrFail($id)->delete();
 
         return back()->with('success', 'Client supprimé avec succès !');
+    }
+
+    // ═══ VUE GLOBALE CONTRATS ═══
+    public function contrats()
+    {
+        if ($redirect = $this->checkAuth()) return $redirect;
+
+        $contrats = \App\Models\Contrat::with([
+                        'bien.agence', 'bien.ville', 'client',
+                        'paiements', 'location', 'vente'
+                    ])
+                    ->when(request('statut'), fn($q) => $q->where('statut_contrat', request('statut')))
+                    ->when(request('id_agence'), fn($q) => $q->whereHas('bien', fn($b) => $b->where('id_agence', request('id_agence'))))
+                    ->latest()->paginate(20);
+
+        $agences = \App\Models\Agence::orderBy('nom_agence')->get();
+
+        return view('superadmin.contrats', compact('contrats', 'agences'));
     }
 }

@@ -1,11 +1,11 @@
-<?php
+﻿<?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\AuthWebController;
 use App\Http\Controllers\Web\BienWebController;
 use App\Http\Controllers\Web\ClientWebController;
 use App\Http\Controllers\Web\AdminWebController;
 use App\Http\Controllers\Web\SuperAdminWebController;
-use App\Http\Controllers\Web\FedaPayController; // ✅ IMPORT MANQUANT — ajouté
+use App\Http\Controllers\Web\CinetPayController;
 
 // ═══════════════════════════════════
 // AUTHENTIFICATION
@@ -59,10 +59,16 @@ Route::delete('/admin/biens/{id}', [AdminWebController::class, 'supprimerBien'])
 Route::patch('/admin/biens/{id}/statut', [AdminWebController::class, 'modifierStatutBien'])->name('admin.biens.statut');
 
 Route::get('/admin/reservations', [AdminWebController::class, 'reservations'])->name('admin.reservations');
+Route::patch('/admin/reservations/{id}/confirmer', [AdminWebController::class, 'confirmerReservation'])->name('admin.reservations.confirmer');
+Route::patch('/admin/reservations/{id}/annuler', [AdminWebController::class, 'annulerReservation'])->name('admin.reservations.annuler');
 
 Route::get('/admin/administrateurs', [AdminWebController::class, 'administrateurs'])->name('admin.administrateurs');
 Route::post('/admin/administrateurs', [AdminWebController::class, 'creerAdministrateur'])->name('admin.administrateurs.creer');
 Route::delete('/admin/administrateurs/{id}', [AdminWebController::class, 'supprimerAdministrateur'])->name('admin.administrateurs.supprimer');
+
+// Config paiement CinetPay — admin principal uniquement
+Route::get('/admin/paiement/config', [AdminWebController::class, 'configPaiement'])->name('admin.paiement.config');
+Route::post('/admin/paiement/config', [AdminWebController::class, 'sauvegarderConfigPaiement'])->name('admin.paiement.config.save');
 
 // ═══════════════════════════════════
 // SUPER ADMIN
@@ -76,11 +82,13 @@ Route::delete('/superadmin/agences/{id}', [SuperAdminWebController::class, 'supp
 
 Route::get('/superadmin/clients', [SuperAdminWebController::class, 'clients'])->name('superadmin.clients');
 Route::delete('/superadmin/clients/{id}', [SuperAdminWebController::class, 'supprimerClient'])->name('superadmin.clients.supprimer');
+Route::get('/superadmin/contrats', [SuperAdminWebController::class, 'contrats'])->name('superadmin.contrats');
 
 // ═══════════════════════════════════
-// FEDAPAY — Paiement mobile money
+// CINETPAY — Paiement mobile money Mali
 // ═══════════════════════════════════
-Route::post('/paiement/acompte', [FedaPayController::class, 'payerAcompte'])->name('fedapay.acompte');
-Route::post('/paiement/total',   [FedaPayController::class, 'payerTotal'])->name('fedapay.total');
-Route::post('/paiement/solde',   [FedaPayController::class, 'payerSolde'])->name('fedapay.solde');
-Route::get('/paiement/callback', [FedaPayController::class, 'callback'])->name('fedapay.callback');
+Route::post('/paiement/acompte', [CinetPayController::class, 'payerAcompte'])->name('cinetpay.acompte');
+Route::post('/paiement/total',   [CinetPayController::class, 'payerTotal'])->name('cinetpay.total');
+Route::post('/paiement/solde',   [CinetPayController::class, 'payerSolde'])->name('cinetpay.solde');
+Route::get('/paiement/callback', [CinetPayController::class, 'callback'])->name('cinetpay.callback');
+Route::post('/paiement/notify',  [CinetPayController::class, 'notify'])->name('cinetpay.notify');

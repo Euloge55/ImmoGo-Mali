@@ -111,8 +111,6 @@ class BienWebController extends Controller
     // ═══ CRÉER UN BIEN (Admin) ═══
     public function creerBien(Request $request)
     {
-        dd($request->allFiles());
-
         $request->validate([
             'id_typebien'      => 'required|exists:type_biens,id_typebien',
             'titre_bien'       => 'required|string',
