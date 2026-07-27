@@ -78,15 +78,27 @@ class AdminWebController extends Controller
             'id_typebien'      => 'required|exists:type_biens,id_typebien',
             'titre_bien'       => 'required|string',
             'description_bien' => 'required|string',
-            'prix'             => 'required|numeric',
             'superficie'       => 'required|numeric',
             'localisation'     => 'required|string',
+            'type_contrat'     => 'required|in:vente,location',
             'id_departement'   => 'required|exists:departements,id_departement',
             'id_ville'         => 'required|exists:villes,id_ville',
             'id_quartier'      => 'nullable|exists:quartiers,id_quartier',
             'photos'           => 'nullable|array|max:5',
             'photos.*'         => 'image|mimes:jpeg,png,jpg|max:2048',
+            // vente
+            'prix'             => 'required_if:type_contrat,vente|nullable|numeric|min:0',
+            // location
+            'loyer'            => 'required_if:type_contrat,location|nullable|numeric|min:0',
+            'nb_mois_avance'   => 'nullable|integer|min:0|max:24',
+            'caution_eau'      => 'nullable|numeric|min:0',
+            'caution_electricite' => 'nullable|numeric|min:0',
         ]);
+
+        // Le champ prix vient soit de 'prix' (vente) soit de 'loyer' (location)
+        $prix = $request->type_contrat === 'location'
+            ? $request->loyer
+            : $request->prix;
 
         // Upload des photos
         $photosPaths = [];
@@ -98,20 +110,23 @@ class AdminWebController extends Controller
         }
 
         Bien::create([
-            'id_agence'        => session('admin')->id_agence,
-            'id_admin'         => session('admin')->id_admin,
-            'id_typebien'      => $request->id_typebien,
-            'titre_bien'       => $request->titre_bien,
-            'description_bien' => $request->description_bien,
-            'prix'             => $request->prix,
-            'superficie'       => $request->superficie,
-            'localisation'     => $request->localisation,
-            'id_departement'   => $request->id_departement,
-            'id_ville'         => $request->id_ville,
-            'id_quartier'      => $request->id_quartier,
-            'statut'           => 'disponible',
-            'type_contrat'     => $request->type_contrat, // ← présent ?
-            'photos'           => !empty($photosPaths) ? $photosPaths : null,
+            'id_agence'          => session('admin')->id_agence,
+            'id_admin'           => session('admin')->id_admin,
+            'id_typebien'        => $request->id_typebien,
+            'titre_bien'         => $request->titre_bien,
+            'description_bien'   => $request->description_bien,
+            'prix'               => $prix,
+            'superficie'         => $request->superficie,
+            'localisation'       => $request->localisation,
+            'id_departement'     => $request->id_departement,
+            'id_ville'           => $request->id_ville,
+            'id_quartier'        => $request->id_quartier,
+            'statut'             => 'disponible',
+            'type_contrat'       => $request->type_contrat,
+            'nb_mois_avance'     => $request->type_contrat === 'location' ? $request->nb_mois_avance : null,
+            'caution_eau'        => $request->type_contrat === 'location' ? $request->caution_eau : null,
+            'caution_electricite'=> $request->type_contrat === 'location' ? $request->caution_electricite : null,
+            'photos'             => !empty($photosPaths) ? $photosPaths : null,
         ]);
 
         return redirect()->route('admin.biens')
@@ -129,18 +144,30 @@ class AdminWebController extends Controller
         $request->validate([
             'titre_bien'       => 'required|string',
             'description_bien' => 'required|string',
-            'prix'             => 'required|numeric',
             'superficie'       => 'required|numeric',
             'localisation'     => 'required|string',
             'id_typebien'      => 'required|exists:type_biens,id_typebien',
+            'type_contrat'     => 'required|in:vente,location',
             'id_departement'   => 'required|exists:departements,id_departement',
             'id_ville'         => 'required|exists:villes,id_ville',
             'id_quartier'      => 'nullable|exists:quartiers,id_quartier',
             'photos'           => 'nullable|array|max:5',
             'photos.*'         => 'image|mimes:jpeg,png,jpg|max:2048',
+            'prix'             => 'required_if:type_contrat,vente|nullable|numeric|min:0',
+            'loyer'            => 'required_if:type_contrat,location|nullable|numeric|min:0',
+            'nb_mois_avance'   => 'nullable|integer|min:0|max:24',
+            'caution_eau'      => 'nullable|numeric|min:0',
+            'caution_electricite' => 'nullable|numeric|min:0',
         ]);
 
-        $data = $request->except(['_token', '_method', 'photos']);
+        $data = $request->except(['_token', '_method', 'photos', 'loyer']);
+        // Normaliser le prix selon le type de contrat
+        $data['prix'] = $request->type_contrat === 'location' ? $request->loyer : $request->prix;
+        if ($request->type_contrat !== 'location') {
+            $data['nb_mois_avance']    = null;
+            $data['caution_eau']       = null;
+            $data['caution_electricite'] = null;
+        }
 
         // Nouvelles photos si envoyées
         if ($request->hasFile('photos')) {

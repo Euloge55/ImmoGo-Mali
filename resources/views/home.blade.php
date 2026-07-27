@@ -431,11 +431,17 @@
                                     {{ number_format($bien->prix, 0, ',', ' ') }}
                                 </span>
                                 <small class="text-muted">
-                                    FCFA
-                                    @if($bien->type_contrat == 'location')
-                                        /mois
-                                    @endif
+                                    CFA{{ $bien->type_contrat == 'location' ? '/mois' : '' }}
                                 </small>
+                                @if($bien->type_contrat == 'location' && ($bien->nb_mois_avance || $bien->caution_eau || $bien->caution_electricite))
+                                    @php
+                                        $avance = $bien->prix * ($bien->nb_mois_avance ?? 0);
+                                        $totalEntree = $bien->prix + $avance + ($bien->caution_eau ?? 0) + ($bien->caution_electricite ?? 0);
+                                    @endphp
+                                    <br><small class="text-muted" style="font-size:10px">
+                                        Entrée : {{ number_format($totalEntree, 0, ',', ' ') }} CFA
+                                    </small>
+                                @endif
                             </div>
                             <a href="{{ route('biens.show', $bien->id_bien) }}"
                             class="btn btn-sm fw-semibold"

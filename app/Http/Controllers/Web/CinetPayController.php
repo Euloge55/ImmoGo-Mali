@@ -50,6 +50,23 @@ class CinetPayController extends Controller
         ];
     }
 
+    /**
+     * Calcule le montant total à payer pour un bien
+     * - Vente : prix du bien
+     * - Location : loyer + avance + caution eau + caution élec
+     */
+    private function getMontantTotal(Bien $bien): int
+    {
+        if ($bien->type_contrat === 'location') {
+            $loyer  = $bien->prix;
+            $avance = $loyer * ($bien->nb_mois_avance ?? 0);
+            $eau    = $bien->caution_eau ?? 0;
+            $elec   = $bien->caution_electricite ?? 0;
+            return (int) round($loyer + $avance + $eau + $elec);
+        }
+        return (int) round($bien->prix);
+    }
+
     // ═══ PAIEMENT ACOMPTE (10%) ═══
     public function payerAcompte(Request $request)
     {
@@ -73,7 +90,8 @@ class CinetPayController extends Controller
             );
         }
 
-        $montant       = (int) round($bien->prix * 0.10);
+        $montantTotal  = $this->getMontantTotal($bien);
+        $montant       = (int) round($montantTotal * 0.10);
         $transactionId = 'ACP-' . strtoupper(Str::random(12));
 
         // Sauvegarder en session avant redirection
@@ -141,7 +159,7 @@ class CinetPayController extends Controller
             );
         }
 
-        $montant       = (int) $bien->prix;
+        $montant       = $this->getMontantTotal($bien);
         $transactionId = 'TOT-' . strtoupper(Str::random(12));
 
         session([
@@ -349,9 +367,11 @@ class CinetPayController extends Controller
             ]);
 
             if ($typeContrat === 'location') {
+                // Pour la location, le montant total = loyer + avances + cautions
+                $montantTotalLocation = $this->getMontantTotal($bien);
                 Location::create([
                     'id_contrat'                 => $contrat->id_contrat,
-                    'montant_total_location'     => $bien->prix,
+                    'montant_total_location'     => $montantTotalLocation,
                     'date_reserv_location'       => now(),
                     'date_limite_solde_location' => now()->addDays(30),
                 ]);

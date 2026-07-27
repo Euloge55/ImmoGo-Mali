@@ -182,56 +182,146 @@
 
             <!-- PRIX ET BOUTONS -->
             <div class="card info-card p-4 mb-4">
-                <div class="text-center mb-4">
-                    <p class="text-muted mb-1">Prix</p>
-                    <h2 class="fw-bold" style="color:#4ECDC4">
+
+                @if($bien->type_contrat === 'location')
+                {{-- ── LOCATION ── --}}
+                <div class="text-center mb-3">
+                    <span class="badge mb-2" style="background:#e8fffe;color:#4ECDC4;border:1px solid #4ECDC4">
+                        <i class="fas fa-key me-1"></i>À Louer
+                    </span>
+                    <p class="text-muted mb-1 small">Loyer mensuel</p>
+                    <h2 class="fw-bold mb-0" style="color:#4ECDC4">
                         {{ number_format($bien->prix, 0, ',', ' ') }}
                     </h2>
-                    <p class="text-muted">FCFA</p>
+                    <p class="text-muted">CFA / mois</p>
+                </div>
+
+                {{-- Conditions --}}
+                @php
+                    $avance  = $bien->prix * ($bien->nb_mois_avance ?? 0);
+                    $eau     = $bien->caution_eau ?? 0;
+                    $elec    = $bien->caution_electricite ?? 0;
+                    $totalEntree = $bien->prix + $avance + $eau + $elec;
+                @endphp
+
+                @if($bien->nb_mois_avance || $eau || $elec)
+                <div class="mb-3 p-3 rounded-3" style="background:#f8f9fa">
+                    <p class="fw-semibold small mb-2">
+                        <i class="fas fa-receipt me-1" style="color:#4ECDC4"></i>
+                        Conditions d'entrée
+                    </p>
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">1 mois loyer</span>
+                        <span class="fw-semibold">{{ number_format($bien->prix, 0, ',', ' ') }} CFA</span>
+                    </div>
+                    @if($bien->nb_mois_avance)
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">{{ $bien->nb_mois_avance }} mois d'avance</span>
+                        <span class="fw-semibold">{{ number_format($avance, 0, ',', ' ') }} CFA</span>
+                    </div>
+                    @endif
+                    @if($eau)
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">Caution eau</span>
+                        <span class="fw-semibold">{{ number_format($eau, 0, ',', ' ') }} CFA</span>
+                    </div>
+                    @endif
+                    @if($elec)
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">Caution électricité</span>
+                        <span class="fw-semibold">{{ number_format($elec, 0, ',', ' ') }} CFA</span>
+                    </div>
+                    @endif
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Total à l'entrée</span>
+                        <span class="fw-bold" style="color:#4ECDC4">{{ number_format($totalEntree, 0, ',', ' ') }} CFA</span>
+                    </div>
+                </div>
+                @endif
+
+                @if($bien->statut === 'disponible')
+                    @if(session('client'))
+                    <form action="{{ route('cinetpay.acompte') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
+                        <input type="hidden" name="type_contrat" value="location">
+                        <button type="submit" class="btn w-100 py-3 fw-semibold mb-2"
+                                style="background:#4ECDC4;color:white;border-radius:12px">
+                            <i class="fas fa-calendar-check me-2"></i>
+                            Réserver — Acompte ({{ number_format($totalEntree * 0.10, 0, ',', ' ') }} CFA)
+                        </button>
+                    </form>
+                    <form action="{{ route('cinetpay.total') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
+                        <input type="hidden" name="type_contrat" value="location">
+                        <button type="submit" class="btn w-100 py-3 fw-semibold btn-outline-success"
+                                style="border-radius:12px">
+                            <i class="fas fa-credit-card me-2"></i>
+                            Payer la totalité ({{ number_format($totalEntree, 0, ',', ' ') }} CFA)
+                        </button>
+                    </form>
+                    @else
+                    <a href="{{ route('login') }}" class="btn w-100 py-3 fw-semibold"
+                       style="background:#4ECDC4;color:white;border-radius:12px">
+                        <i class="fas fa-sign-in-alt me-2"></i>Connectez-vous pour réserver
+                    </a>
+                    @endif
+                @else
+                    <button class="btn w-100 py-3 fw-semibold btn-secondary" disabled>
+                        <i class="fas fa-times-circle me-2"></i>{{ ucfirst($bien->statut) }}
+                    </button>
+                @endif
+
+                @else
+                {{-- ── VENTE ── --}}
+                <div class="text-center mb-4">
+                    <span class="badge mb-2" style="background:#fff8f0;color:#e67e22;border:1px solid #e67e22">
+                        <i class="fas fa-tag me-1"></i>À Vendre
+                    </span>
+                    <p class="text-muted mb-1 small">Prix de vente</p>
+                    <h2 class="fw-bold mb-0" style="color:#4ECDC4">
+                        {{ number_format($bien->prix, 0, ',', ' ') }}
+                    </h2>
+                    <p class="text-muted">CFA</p>
                 </div>
 
                 @if($bien->statut === 'disponible')
                     @if(session('client'))
-                    <!-- BOUTON RÉSERVER avec CinetPay -->
                     <form action="{{ route('cinetpay.acompte') }}" method="POST">
                         @csrf
                         <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Type de contrat</label>
-                            <select name="type_contrat" class="form-select">
-                                <option value="location">Location</option>
-                                <option value="vente">Vente</option>
-                            </select>
-                        </div>
-                        <button type="submit"
-                                class="btn w-100 py-3 fw-semibold mb-2"
-                                style="background:#4ECDC4; color:white; border-radius:12px">
+                        <input type="hidden" name="type_contrat" value="vente">
+                        <button type="submit" class="btn w-100 py-3 fw-semibold mb-2"
+                                style="background:#4ECDC4;color:white;border-radius:12px">
                             <i class="fas fa-calendar-check me-2"></i>
-                            Réserver — Payer acompte ({{ number_format($bien->prix * 0.10, 0, ',', ' ') }} CFA)
+                            Réserver — Acompte 10% ({{ number_format($bien->prix * 0.10, 0, ',', ' ') }} CFA)
                         </button>
                     </form>
-
-                    <!-- BOUTON PAYER TOTAL avec CinetPay -->
                     <form action="{{ route('cinetpay.total') }}" method="POST">
                         @csrf
                         <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
                         <input type="hidden" name="type_contrat" value="vente">
-                        <button type="submit"
-                                class="btn w-100 py-3 fw-semibold btn-outline-success"
+                        <button type="submit" class="btn w-100 py-3 fw-semibold btn-outline-success"
                                 style="border-radius:12px">
                             <i class="fas fa-credit-card me-2"></i>
                             Payer la totalité ({{ number_format($bien->prix, 0, ',', ' ') }} CFA)
                         </button>
                     </form>
-                @endif
-
+                    @else
+                    <a href="{{ route('login') }}" class="btn w-100 py-3 fw-semibold"
+                       style="background:#4ECDC4;color:white;border-radius:12px">
+                        <i class="fas fa-sign-in-alt me-2"></i>Connectez-vous pour acheter
+                    </a>
+                    @endif
                 @else
-                    <button class="btn w-100 py-3 fw-semibold btn-secondary"
-                            disabled>
-                        <i class="fas fa-times-circle me-2"></i>
-                        {{ ucfirst($bien->statut) }}
+                    <button class="btn w-100 py-3 fw-semibold btn-secondary" disabled>
+                        <i class="fas fa-times-circle me-2"></i>{{ ucfirst($bien->statut) }}
                     </button>
                 @endif
+                @endif
+
             </div>
 
             <!-- AGENCE -->
@@ -298,7 +388,8 @@
                         </p>
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="fw-bold small" style="color:#4ECDC4">
-                                {{ number_format($similaire->prix, 0, ',', ' ') }} FCFA
+                                {{ number_format($similaire->prix, 0, ',', ' ') }} CFA
+                                @if($similaire->type_contrat=='location')/mois@endif
                             </span>
                             <a href="{{ route('biens.show', $similaire->id_bien) }}"
                                class="btn btn-sm"
@@ -317,139 +408,6 @@
 
 </div>
 
-{{-- ═══ MODALS ═══ --}}
-@if(session('client') && $bien->statut === 'disponible')
-
-<!-- MODAL RÉSERVATION (acompte 10%) -->
-<div class="modal fade" id="modalReserver" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content border-0 rounded-4">
-            <div class="modal-header border-0"
-                 style="background:linear-gradient(135deg,#4ECDC4,#2C3E50);
-                        border-radius:16px 16px 0 0">
-                <h5 class="modal-title fw-bold text-white">
-                    <i class="fas fa-calendar-check me-2"></i>
-                    Réserver ce bien
-                </h5>
-                <button type="button" class="btn-close btn-close-white"
-                        data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-
-                <div class="alert border-0 rounded-3 mb-4"
-                     style="background:#e8fffe">
-                    <i class="fas fa-info-circle me-2" style="color:#4ECDC4"></i>
-                    Acompte requis :
-                    <strong style="color:#4ECDC4">
-                        {{ number_format($bien->prix * 0.10, 0, ',', ' ') }} FCFA
-                    </strong>
-                    (10% du prix total)
-                </div>
-
-                <form action="{{ route('client.reserver') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="id_bien"
-                           value="{{ $bien->id_bien }}">
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Type de contrat</label>
-                        <select name="type_contrat" class="form-select" required>
-                            <option value="location">
-                                <i class="fas fa-key"></i> Location
-                            </option>
-                            <option value="vente">
-                                <i class="fas fa-home"></i> Vente
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">
-                            Mode de paiement de l'acompte
-                        </label>
-                        <select name="id_mode_paiement" class="form-select" required>
-                            @foreach(\App\Models\ModePaiement::all() as $mode)
-                                <option value="{{ $mode->id_mode_paiement }}">
-                                    {{ $mode->nom_mode_paiement }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <button type="submit"
-                            class="btn w-100 py-3 fw-semibold"
-                            style="background:#4ECDC4; color:white;
-                                   border-radius:12px">
-                        <i class="fas fa-check me-2"></i>
-                        Confirmer la réservation
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL PAIEMENT TOTAL -->
-<div class="modal fade" id="modalPayerTotal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content border-0 rounded-4">
-            <div class="modal-header border-0"
-                 style="background:linear-gradient(135deg,#2ecc71,#27ae60);
-                        border-radius:16px 16px 0 0">
-                <h5 class="modal-title fw-bold text-white">
-                    <i class="fas fa-credit-card me-2"></i>
-                    Paiement total
-                </h5>
-                <button type="button" class="btn-close btn-close-white"
-                        data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-
-                <div class="alert alert-success border-0 rounded-3 mb-4">
-                    <i class="fas fa-check-circle me-2"></i>
-                    Montant total à payer :
-                    <strong>
-                        {{ number_format($bien->prix, 0, ',', ' ') }} FCFA
-                    </strong>
-                </div>
-
-                <form action="{{ route('client.payer.total') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="id_bien"
-                           value="{{ $bien->id_bien }}">
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Type de contrat</label>
-                        <select name="type_contrat" class="form-select" required>
-                            <option value="location">Location</option>
-                            <option value="vente">Vente</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">Mode de paiement</label>
-                        <select name="id_mode_paiement" class="form-select" required>
-                            @foreach(\App\Models\ModePaiement::all() as $mode)
-                                <option value="{{ $mode->id_mode_paiement }}">
-                                    {{ $mode->nom_mode_paiement }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <button type="submit"
-                            class="btn w-100 py-3 fw-semibold btn-success"
-                            style="border-radius:12px">
-                        <i class="fas fa-credit-card me-2"></i>
-                        Payer {{ number_format($bien->prix, 0, ',', ' ') }} FCFA
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-@endif
 @endsection
 
 @section('scripts')

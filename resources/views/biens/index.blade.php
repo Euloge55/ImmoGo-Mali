@@ -278,10 +278,7 @@
                                     <span class="fw-bold" style="color:#4ECDC4">
                                         {{ number_format($bien->prix, 0, ',', ' ') }}
                                         <small class="text-muted">
-                                            FCFA
-                                            @if($bien->type_contrat == 'location')
-                                                /mois
-                                            @endif
+                                            CFA{{ $bien->type_contrat == 'location' ? '/mois' : '' }}
                                         </small>
                                     </span>
                                     <a href="{{ route('biens.show', $bien->id_bien) }}"

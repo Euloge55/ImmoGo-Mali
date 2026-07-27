@@ -16,18 +16,14 @@ class Bien extends Model
         'superficie',
         'localisation',
         'statut',
-        'type_transaction',
-        'nombre_pieces',
-        'nombre_salles_bain',
+        'type_contrat',
+        'nb_mois_avance',
+        'caution_eau',
+        'caution_electricite',
         'photos',
         'id_departement',
         'id_ville',
         'id_quartier',
-        'id_agence', 'id_admin', 'id_typebien',
-        'titre_bien', 'description_bien', 'prix',
-        'superficie', 'localisation', 'statut',
-        'photos', 'id_departement', 'id_ville',
-        'id_quartier', 'type_contrat', 
     ];
 
     protected $casts = [
