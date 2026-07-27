@@ -55,6 +55,51 @@ class AdminWebController extends Controller
         ));
     }
 
+    // ═══ PROFIL ADMIN ═══
+    public function profil()
+    {
+        if ($redirect = $this->checkAuth()) return $redirect;
+        $admin = \App\Models\Administrateur::find(session('admin')->id_admin);
+        return view('admin.profil', compact('admin'));
+    }
+
+    public function updateProfil(Request $request)
+    {
+        if ($redirect = $this->checkAuth()) return $redirect;
+
+        $admin = \App\Models\Administrateur::find(session('admin')->id_admin);
+
+        $request->validate([
+            'nom_admin'    => 'required|string|max:100',
+            'prenom_admin' => 'required|string|max:100',
+            'email'        => 'required|email|unique:administrateurs,email,' . $admin->id_admin . ',id_admin',
+        ]);
+
+        $admin->update($request->only(['nom_admin', 'prenom_admin', 'email']));
+        session(['admin' => $admin->fresh()]);
+
+        return back()->with('success', 'Profil mis à jour !');
+    }
+
+    public function updateMotDePasse(Request $request)
+    {
+        if ($redirect = $this->checkAuth()) return $redirect;
+
+        $request->validate([
+            'ancien_mot_de_passe'  => 'required',
+            'nouveau_mot_de_passe' => 'required|min:6|confirmed',
+        ]);
+
+        $admin = \App\Models\Administrateur::find(session('admin')->id_admin);
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->ancien_mot_de_passe, $admin->mot_de_passe)) {
+            return back()->with('error', 'Ancien mot de passe incorrect.');
+        }
+
+        $admin->update(['mot_de_passe' => \Illuminate\Support\Facades\Hash::make($request->nouveau_mot_de_passe)]);
+        return back()->with('success', 'Mot de passe modifié avec succès !');
+    }
+
     // ═══ GESTION BIENS ═══
     public function biens()
     {

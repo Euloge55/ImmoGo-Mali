@@ -70,6 +70,11 @@ Route::delete('/admin/administrateurs/{id}', [AdminWebController::class, 'suppri
 Route::get('/admin/paiement/config', [AdminWebController::class, 'configPaiement'])->name('admin.paiement.config');
 Route::post('/admin/paiement/config', [AdminWebController::class, 'sauvegarderConfigPaiement'])->name('admin.paiement.config.save');
 
+// Profil admin
+Route::get('/admin/profil', [AdminWebController::class, 'profil'])->name('admin.profil');
+Route::put('/admin/profil', [AdminWebController::class, 'updateProfil'])->name('admin.profil.update');
+Route::patch('/admin/profil/mot-de-passe', [AdminWebController::class, 'updateMotDePasse'])->name('admin.password.update');
+
 // ═══════════════════════════════════
 // SUPER ADMIN
 // ═══════════════════════════════════

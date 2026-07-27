@@ -150,6 +150,20 @@
                         </select>
                     </div>
 
+                    <!-- Type contrat -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Type d'offre</label>
+                        <select name="type_contrat" class="form-select">
+                            <option value="">Tous</option>
+                            <option value="location" {{ request('type_contrat') == 'location' ? 'selected' : '' }}>
+                                🏠 À Louer
+                            </option>
+                            <option value="vente" {{ request('type_contrat') == 'vente' ? 'selected' : '' }}>
+                                🏷️ À Vendre
+                            </option>
+                        </select>
+                    </div>
+
                     <!-- Tri prix -->
                     <div class="mb-4">
                         <label class="form-label fw-semibold small">Trier par prix</label>

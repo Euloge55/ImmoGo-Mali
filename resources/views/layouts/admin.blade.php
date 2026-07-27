@@ -217,6 +217,11 @@
         <hr style="border-color:rgba(255,255,255,0.1); margin:15px 20px">
         <div class="sidebar-section-title">Compte</div>
 
+        <a href="{{ route('admin.profil') }}"
+           class="{{ request()->routeIs('admin.profil') ? 'active' : '' }}">
+            <i class="fas fa-user-circle"></i> Mon Profil
+        </a>
+
         <form action="{{ route('logout') }}" method="POST">
             @csrf
             <button type="submit" class="logout-btn">
