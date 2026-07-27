@@ -183,32 +183,45 @@
             <!-- PRIX ET BOUTONS -->
             <div class="card info-card p-4 mb-4">
 
-                @if($bien->type_contrat === 'location')
-                {{-- ── LOCATION ── --}}
+                @php
+                    $avance      = $bien->prix * ($bien->nb_mois_avance ?? 0);
+                    $eau         = (float)($bien->caution_eau ?? 0);
+                    $elec        = (float)($bien->caution_electricite ?? 0);
+                    $totalEntree = $bien->prix + $avance + $eau + $elec;
+                    $estLocation = ($bien->type_contrat === 'location');
+                    $aConditions = $estLocation && ($bien->nb_mois_avance || $eau || $elec);
+                    $disponible  = ($bien->statut === 'disponible');
+                    $connecte    = (bool) session('client');
+                @endphp
+
+                {{-- ══ BADGE TYPE ══ --}}
+                @if($estLocation)
                 <div class="text-center mb-3">
                     <span class="badge mb-2" style="background:#e8fffe;color:#4ECDC4;border:1px solid #4ECDC4">
                         <i class="fas fa-key me-1"></i>À Louer
                     </span>
                     <p class="text-muted mb-1 small">Loyer mensuel</p>
-                    <h2 class="fw-bold mb-0" style="color:#4ECDC4">
-                        {{ number_format($bien->prix, 0, ',', ' ') }}
-                    </h2>
+                    <h2 class="fw-bold mb-0" style="color:#4ECDC4">{{ number_format($bien->prix, 0, ',', ' ') }}</h2>
                     <p class="text-muted">CFA / mois</p>
                 </div>
+                @endif
 
-                {{-- Conditions --}}
-                @php
-                    $avance  = $bien->prix * ($bien->nb_mois_avance ?? 0);
-                    $eau     = $bien->caution_eau ?? 0;
-                    $elec    = $bien->caution_electricite ?? 0;
-                    $totalEntree = $bien->prix + $avance + $eau + $elec;
-                @endphp
+                @if(!$estLocation)
+                <div class="text-center mb-4">
+                    <span class="badge mb-2" style="background:#fff8f0;color:#e67e22;border:1px solid #e67e22">
+                        <i class="fas fa-tag me-1"></i>À Vendre
+                    </span>
+                    <p class="text-muted mb-1 small">Prix de vente</p>
+                    <h2 class="fw-bold mb-0" style="color:#4ECDC4">{{ number_format($bien->prix, 0, ',', ' ') }}</h2>
+                    <p class="text-muted">CFA</p>
+                </div>
+                @endif
 
-                @if($bien->nb_mois_avance || $eau || $elec)
+                {{-- ══ CONDITIONS LOCATION ══ --}}
+                @if($aConditions)
                 <div class="mb-3 p-3 rounded-3" style="background:#f8f9fa">
                     <p class="fw-semibold small mb-2">
-                        <i class="fas fa-receipt me-1" style="color:#4ECDC4"></i>
-                        Conditions d'entrée
+                        <i class="fas fa-receipt me-1" style="color:#4ECDC4"></i>Conditions d'entrée
                     </p>
                     <div class="d-flex justify-content-between small mb-1">
                         <span class="text-muted">1 mois loyer</span>
@@ -240,8 +253,22 @@
                 </div>
                 @endif
 
-                @if($bien->statut === 'disponible')
-                    @if(session('client'))
+                {{-- ══ BOUTONS ══ --}}
+                @if(!$disponible)
+                    <button class="btn w-100 py-3 fw-semibold btn-secondary" disabled>
+                        <i class="fas fa-times-circle me-2"></i>{{ ucfirst($bien->statut) }}
+                    </button>
+                @endif
+
+                @if($disponible && !$connecte)
+                    <a href="{{ route('login') }}" class="btn w-100 py-3 fw-semibold"
+                       style="background:#4ECDC4;color:white;border-radius:12px">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        Connectez-vous pour {{ $estLocation ? 'réserver' : 'acheter' }}
+                    </a>
+                @endif
+
+                @if($disponible && $connecte && $estLocation)
                     <form action="{{ route('cinetpay.acompte') }}" method="POST">
                         @csrf
                         <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
@@ -262,33 +289,9 @@
                             Payer la totalité ({{ number_format($totalEntree, 0, ',', ' ') }} CFA)
                         </button>
                     </form>
-                    @else
-                    <a href="{{ route('login') }}" class="btn w-100 py-3 fw-semibold"
-                       style="background:#4ECDC4;color:white;border-radius:12px">
-                        <i class="fas fa-sign-in-alt me-2"></i>Connectez-vous pour réserver
-                    </a>
-                    @endif
-                @else
-                    <button class="btn w-100 py-3 fw-semibold btn-secondary" disabled>
-                        <i class="fas fa-times-circle me-2"></i>{{ ucfirst($bien->statut) }}
-                    </button>
                 @endif
 
-                @else
-                {{-- ── VENTE ── --}}
-                <div class="text-center mb-4">
-                    <span class="badge mb-2" style="background:#fff8f0;color:#e67e22;border:1px solid #e67e22">
-                        <i class="fas fa-tag me-1"></i>À Vendre
-                    </span>
-                    <p class="text-muted mb-1 small">Prix de vente</p>
-                    <h2 class="fw-bold mb-0" style="color:#4ECDC4">
-                        {{ number_format($bien->prix, 0, ',', ' ') }}
-                    </h2>
-                    <p class="text-muted">CFA</p>
-                </div>
-
-                @if($bien->statut === 'disponible')
-                    @if(session('client'))
+                @if($disponible && $connecte && !$estLocation)
                     <form action="{{ route('cinetpay.acompte') }}" method="POST">
                         @csrf
                         <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
@@ -309,17 +312,6 @@
                             Payer la totalité ({{ number_format($bien->prix, 0, ',', ' ') }} CFA)
                         </button>
                     </form>
-                    @else
-                    <a href="{{ route('login') }}" class="btn w-100 py-3 fw-semibold"
-                       style="background:#4ECDC4;color:white;border-radius:12px">
-                        <i class="fas fa-sign-in-alt me-2"></i>Connectez-vous pour acheter
-                    </a>
-                    @endif
-                @else
-                    <button class="btn w-100 py-3 fw-semibold btn-secondary" disabled>
-                        <i class="fas fa-times-circle me-2"></i>{{ ucfirst($bien->statut) }}
-                    </button>
-                @endif
                 @endif
 
             </div>
