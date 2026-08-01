@@ -269,49 +269,33 @@
                 @endif
 
                 @if($disponible && $connecte && $estLocation)
-                    <form action="{{ route('cinetpay.acompte') }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
-                        <input type="hidden" name="type_contrat" value="location">
-                        <button type="submit" class="btn w-100 py-3 fw-semibold mb-2"
-                                style="background:#4ECDC4;color:white;border-radius:12px">
-                            <i class="fas fa-calendar-check me-2"></i>
-                            Réserver — Acompte ({{ number_format($totalEntree * 0.10, 0, ',', ' ') }} CFA)
-                        </button>
-                    </form>
-                    <form action="{{ route('cinetpay.total') }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
-                        <input type="hidden" name="type_contrat" value="location">
-                        <button type="submit" class="btn w-100 py-3 fw-semibold btn-outline-success"
-                                style="border-radius:12px">
-                            <i class="fas fa-credit-card me-2"></i>
-                            Payer la totalité ({{ number_format($totalEntree, 0, ',', ' ') }} CFA)
-                        </button>
-                    </form>
+                    <button type="button" class="btn w-100 py-3 fw-semibold mb-2"
+                            style="background:#4ECDC4;color:white;border-radius:12px"
+                            onclick="lancerPaiement('acompte', {{ $bien->id_bien }}, 'location')">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        Réserver — Acompte ({{ number_format($totalEntree * 0.10, 0, ',', ' ') }} CFA)
+                    </button>
+                    <button type="button" class="btn w-100 py-3 fw-semibold btn-outline-success"
+                            style="border-radius:12px"
+                            onclick="lancerPaiement('complet', {{ $bien->id_bien }}, 'location')">
+                        <i class="fas fa-credit-card me-2"></i>
+                        Payer la totalité ({{ number_format($totalEntree, 0, ',', ' ') }} CFA)
+                    </button>
                 @endif
 
                 @if($disponible && $connecte && !$estLocation)
-                    <form action="{{ route('cinetpay.acompte') }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
-                        <input type="hidden" name="type_contrat" value="vente">
-                        <button type="submit" class="btn w-100 py-3 fw-semibold mb-2"
-                                style="background:#4ECDC4;color:white;border-radius:12px">
-                            <i class="fas fa-calendar-check me-2"></i>
-                            Réserver — Acompte 10% ({{ number_format($bien->prix * 0.10, 0, ',', ' ') }} CFA)
-                        </button>
-                    </form>
-                    <form action="{{ route('cinetpay.total') }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
-                        <input type="hidden" name="type_contrat" value="vente">
-                        <button type="submit" class="btn w-100 py-3 fw-semibold btn-outline-success"
-                                style="border-radius:12px">
-                            <i class="fas fa-credit-card me-2"></i>
-                            Payer la totalité ({{ number_format($bien->prix, 0, ',', ' ') }} CFA)
-                        </button>
-                    </form>
+                    <button type="button" class="btn w-100 py-3 fw-semibold mb-2"
+                            style="background:#4ECDC4;color:white;border-radius:12px"
+                            onclick="lancerPaiement('acompte', {{ $bien->id_bien }}, 'vente')">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        Réserver — Acompte 10% ({{ number_format($bien->prix * 0.10, 0, ',', ' ') }} CFA)
+                    </button>
+                    <button type="button" class="btn w-100 py-3 fw-semibold btn-outline-success"
+                            style="border-radius:12px"
+                            onclick="lancerPaiement('complet', {{ $bien->id_bien }}, 'vente')">
+                        <i class="fas fa-credit-card me-2"></i>
+                        Payer la totalité ({{ number_format($bien->prix, 0, ',', ' ') }} CFA)
+                    </button>
                 @endif
 
             </div>
@@ -381,7 +365,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="fw-bold small" style="color:#4ECDC4">
                                 {{ number_format($similaire->prix, 0, ',', ' ') }} CFA
-                                @if($similaire->type_contrat=='location')/mois@endif
+                                {{ $similaire->type_contrat === 'location' ? '/mois' : '' }}
                             </span>
                             <a href="{{ route('biens.show', $similaire->id_bien) }}"
                                class="btn btn-sm"
@@ -403,13 +387,92 @@
 @endsection
 
 @section('scripts')
+<script src="https://cdn.cinetpay.com/seamless/main.js"></script>
 <script>
+const CSRF_TOKEN = '{{ csrf_token() }}';
+const INIT_URL   = '{{ route("cinetpay.init") }}';
+const RETURN_URL = '{{ route("cinetpay.callback") }}';
+
+function lancerPaiement(typePaiement, idBien, typeContrat) {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Chargement...';
+
+    fetch(INIT_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': CSRF_TOKEN,
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+            id_bien:       idBien,
+            type_contrat:  typeContrat,
+            type_paiement: typePaiement,
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = btn.getAttribute('data-original') || btn.innerHTML;
+
+        if (!data.success) {
+            alert('Erreur : ' + data.message);
+            location.reload();
+            return;
+        }
+
+        // Lancer la popup CinetPay SDK
+        CinetPay.setConfig({
+            apikey:      data.apikey,
+            site_id:     data.site_id,
+            notify_url:  data.notify_url,
+            return_url:  data.return_url,
+            mode:        'PRODUCTION',
+        });
+
+        CinetPay.getCheckout({
+            transaction_id:        data.transaction_id,
+            amount:                data.amount,
+            currency:              data.currency,
+            channels:              data.channels,
+            description:           data.description,
+            customer_name:         data.customer_name,
+            customer_surname:      data.customer_surname,
+            customer_email:        data.customer_email,
+            customer_phone_number: data.customer_phone_number,
+            customer_address:      data.customer_address,
+            customer_city:         data.customer_city,
+            customer_country:      data.customer_country,
+            customer_state:        data.customer_state,
+            customer_zip_code:     data.customer_zip_code,
+        });
+
+        CinetPay.waitResponse(function(data) {
+            if (data.status === 'ACCEPTED') {
+                window.location.href = RETURN_URL + '?transaction_id=' + data.transaction_id;
+            } else {
+                alert('Paiement annulé ou refusé.');
+                location.reload();
+            }
+        });
+
+        CinetPay.onError(function(data) {
+            alert('Erreur CinetPay : ' + (data.message || 'Inconnue'));
+            location.reload();
+        });
+    })
+    .catch(err => {
+        btn.disabled = false;
+        alert('Erreur réseau : ' + err.message);
+        location.reload();
+    });
+}
+
 // Changer l'image principale
 function changeMainImage(thumbnail, src) {
     document.getElementById('mainImage').src = src;
-    document.querySelectorAll('.thumbnail-img').forEach(img => {
-        img.classList.remove('active');
-    });
+    document.querySelectorAll('.thumbnail-img').forEach(img => img.classList.remove('active'));
     thumbnail.classList.add('active');
 }
 </script>

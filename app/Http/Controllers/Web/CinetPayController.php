@@ -28,26 +28,171 @@ class CinetPayController extends Controller
      */
     private function initTransaction(array $params): array
     {
-        $response = Http::post('https://api-checkout.cinetpay.com/v2/payment', $params);
+        try {
+            $response = Http::timeout(15)->post('https://new-api.cinetpay.ci/v2/payment', $params);
 
-        if ($response->failed()) {
-            return ['success' => false, 'message' => 'Erreur de connexion CinetPay'];
-        }
+            if ($response->failed()) {
+                return ['success' => false, 'message' => 'Erreur de connexion à CinetPay (code ' . $response->status() . ')'];
+            }
 
-        $data = $response->json();
+            $data = $response->json();
 
-        if (($data['code'] ?? '') !== '201') {
+            if (($data['code'] ?? '') !== '201') {
+                return [
+                    'success' => false,
+                    'message' => $data['message'] ?? 'Erreur CinetPay : réponse inattendue',
+                ];
+            }
+
+            return [
+                'success'        => true,
+                'payment_url'    => $data['data']['payment_url'] ?? null,
+                'transaction_id' => $params['transaction_id'],
+            ];
+
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return [
                 'success' => false,
-                'message' => $data['message'] ?? 'Erreur CinetPay',
+                'message' => 'Impossible de joindre CinetPay. Vérifiez votre connexion internet ou contactez l\'agence.',
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Erreur inattendue : ' . $e->getMessage(),
             ];
         }
+    }
 
-        return [
-            'success'         => true,
-            'payment_url'     => $data['data']['payment_url'] ?? null,
-            'transaction_id'  => $params['transaction_id'],
-        ];
+    /**
+     * ═══ INIT AJAX — appelé par le SDK JS CinetPay ═══
+     * Prépare la transaction en session et retourne les paramètres au frontend
+     */
+    public function initAjax(Request $request)
+    {
+        if (!session('client')) {
+            return response()->json(['success' => false, 'message' => 'Non connecté'], 401);
+        }
+
+        $request->validate([
+            'id_bien'      => 'required|exists:biens,id_bien',
+            'type_contrat' => 'required|in:location,vente',
+            'type_paiement'=> 'required|in:acompte,complet',
+        ]);
+
+        $bien   = Bien::findOrFail($request->id_bien);
+        $agence = $this->getAgenceKeys($bien);
+        $client = session('client');
+
+        if (!$agence || !$agence->cinetpay_site_id || !$agence->cinetpay_api_key) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Paiement non configuré pour cette agence. Contactez-les directement.'
+            ]);
+        }
+
+        $montantTotal  = $this->getMontantTotal($bien);
+        $montant       = $request->type_paiement === 'acompte'
+                         ? (int) round($montantTotal * 0.10)
+                         : $montantTotal;
+
+        $transactionId = strtoupper($request->type_paiement === 'acompte' ? 'ACP' : 'TOT')
+                         . '-' . strtoupper(Str::random(12));
+
+        // Stocker en session pour le callback
+        session([
+            'cinetpay_transaction_id' => $transactionId,
+            'cinetpay_id_bien'        => $bien->id_bien,
+            'cinetpay_type_contrat'   => $request->type_contrat,
+            'cinetpay_type_paiement'  => $request->type_paiement === 'acompte' ? 'acompte' : 'complet',
+            'cinetpay_montant'        => $montant,
+            'cinetpay_id_agence'      => $agence->id_agence,
+        ]);
+
+        return response()->json([
+            'success'        => true,
+            'site_id'        => $agence->cinetpay_site_id,
+            'apikey'         => $agence->cinetpay_api_key,
+            'transaction_id' => $transactionId,
+            'amount'         => $montant,
+            'currency'       => 'XOF',
+            'description'    => ($request->type_paiement === 'acompte' ? 'Acompte 10% - ' : 'Paiement total - ')
+                                . $bien->titre_bien,
+            'customer_name'    => $client->nom_client,
+            'customer_surname' => $client->prenom_client,
+            'customer_email'   => $client->email,
+            'customer_phone_number' => $client->tel_client ?? '',
+            'customer_address' => 'Mali',
+            'customer_city'    => 'Bamako',
+            'customer_country' => 'ML',
+            'customer_state'   => 'ML',
+            'customer_zip_code'=> '00000',
+            'channels'         => 'ALL',
+            'notify_url'       => route('cinetpay.notify'),
+            'return_url'       => route('cinetpay.callback'),
+        ]);
+    }
+
+    /**
+     * ═══ INIT AJAX SOLDE ═══
+     */
+    public function initAjaxSolde(Request $request)
+    {
+        if (!session('client')) {
+            return response()->json(['success' => false, 'message' => 'Non connecté'], 401);
+        }
+
+        $request->validate(['id_contrat' => 'required|exists:contrats,id_contrat']);
+
+        $contrat = Contrat::with(['bien', 'paiements', 'location', 'vente'])->findOrFail($request->id_contrat);
+        $bien    = $contrat->bien;
+        $agence  = $this->getAgenceKeys($bien);
+        $client  = session('client');
+
+        if (!$agence || !$agence->cinetpay_site_id || !$agence->cinetpay_api_key) {
+            return response()->json(['success' => false, 'message' => 'Paiement non configuré pour cette agence.']);
+        }
+
+        $montantTotal = $contrat->type_contrat === 'location'
+            ? $contrat->location->montant_total_location
+            : $contrat->vente->montant_total_vente;
+        $dejaPaye  = $contrat->paiements->sum('montant');
+        $solde     = (int) max(0, $montantTotal - $dejaPaye);
+
+        if ($solde <= 0) {
+            return response()->json(['success' => false, 'message' => 'Contrat déjà entièrement payé.']);
+        }
+
+        $transactionId = 'SOL-' . strtoupper(Str::random(12));
+
+        session([
+            'cinetpay_transaction_id' => $transactionId,
+            'cinetpay_id_contrat'     => $contrat->id_contrat,
+            'cinetpay_type_paiement'  => 'solde',
+            'cinetpay_montant'        => $solde,
+            'cinetpay_id_agence'      => $agence->id_agence,
+        ]);
+
+        return response()->json([
+            'success'        => true,
+            'site_id'        => $agence->cinetpay_site_id,
+            'apikey'         => $agence->cinetpay_api_key,
+            'transaction_id' => $transactionId,
+            'amount'         => $solde,
+            'currency'       => 'XOF',
+            'description'    => 'Solde restant - ' . $bien->titre_bien,
+            'customer_name'    => $client->nom_client,
+            'customer_surname' => $client->prenom_client,
+            'customer_email'   => $client->email,
+            'customer_phone_number' => $client->tel_client ?? '',
+            'customer_address' => 'Mali',
+            'customer_city'    => 'Bamako',
+            'customer_country' => 'ML',
+            'customer_state'   => 'ML',
+            'customer_zip_code'=> '00000',
+            'channels'         => 'ALL',
+            'notify_url'       => route('cinetpay.notify'),
+            'return_url'       => route('cinetpay.callback'),
+        ]);
     }
 
     /**
@@ -280,7 +425,9 @@ class CinetPayController extends Controller
     // ═══ CALLBACK — CinetPay redirige ici après paiement ═══
     public function callback(Request $request)
     {
-        $transactionId = session('cinetpay_transaction_id');
+        // Le SDK JS peut passer transaction_id en GET
+        $transactionId = $request->query('transaction_id')
+                      ?? session('cinetpay_transaction_id');
 
         if (!$transactionId) {
             return redirect()->route('home')
@@ -295,13 +442,17 @@ class CinetPayController extends Controller
                              ->with('error', 'Agence introuvable.');
         }
 
-        $verif = Http::post('https://api-checkout.cinetpay.com/v2/payment/check', [
-            'apikey'         => $agence->cinetpay_api_key,
-            'site_id'        => $agence->cinetpay_site_id,
-            'transaction_id' => $transactionId,
-        ]);
-
-        $data = $verif->json();
+        try {
+            $verif = Http::timeout(15)->post('https://new-api.cinetpay.ci/v2/payment/check', [
+                'apikey'         => $agence->cinetpay_api_key,
+                'site_id'        => $agence->cinetpay_site_id,
+                'transaction_id' => $transactionId,
+            ]);
+            $data = $verif->json();
+        } catch (\Exception $e) {
+            return redirect()->route('client.reservations')
+                             ->with('error', 'Impossible de vérifier le paiement : ' . $e->getMessage());
+        }
 
         if (($data['code'] ?? '') !== '00' || ($data['data']['status'] ?? '') !== 'ACCEPTED') {
             session()->forget([

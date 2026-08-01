@@ -129,22 +129,18 @@
                 </div>
                 @endif
 
-                <!-- BOUTON PAYER SOLDE (CinetPay) -->
+                <!-- BOUTON PAYER SOLDE (CinetPay SDK JS) -->
                 @if($contrat->statut_contrat == 'en_attente' && $solde > 0)
                 <div class="border-top pt-3">
-                    <form action="{{ route('cinetpay.solde') }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="id_contrat"
-                               value="{{ $contrat->id_contrat }}">
-                        <button type="submit"
-                                class="btn fw-semibold w-100"
-                                style="background:#4ECDC4; color:white; border-radius:10px">
-                            <i class="fas fa-credit-card me-2"></i>
-                            Payer le solde restant
-                            ({{ number_format($solde, 0, ',', ' ') }} CFA)
-                            via CinetPay
-                        </button>
-                    </form>
+                    <button type="button"
+                            class="btn fw-semibold w-100"
+                            style="background:#4ECDC4;color:white;border-radius:10px"
+                            onclick="payerSolde({{ $contrat->id_contrat }}, this)">
+                        <i class="fas fa-credit-card me-2"></i>
+                        Payer le solde restant
+                        ({{ number_format($solde, 0, ',', ' ') }} CFA)
+                        via CinetPay
+                    </button>
                 </div>
                 @endif
 
@@ -153,4 +149,77 @@
         @endforeach
     @endif
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.cinetpay.com/seamless/main.js"></script>
+<script>
+const CSRF_TOKEN_RES  = '{{ csrf_token() }}';
+const INIT_SOLDE_URL  = '{{ route("cinetpay.init.solde") }}';
+const CALLBACK_URL    = '{{ route("cinetpay.callback") }}';
+
+function payerSolde(idContrat, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Chargement...';
+
+    fetch(INIT_SOLDE_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': CSRF_TOKEN_RES,
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ id_contrat: idContrat })
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Payer le solde via CinetPay';
+
+        if (!data.success) { alert('Erreur : ' + data.message); return; }
+
+        CinetPay.setConfig({
+            apikey:     data.apikey,
+            site_id:    data.site_id,
+            notify_url: data.notify_url,
+            return_url: data.return_url,
+            mode:       'PRODUCTION',
+        });
+
+        CinetPay.getCheckout({
+            transaction_id:        data.transaction_id,
+            amount:                data.amount,
+            currency:              data.currency,
+            channels:              data.channels,
+            description:           data.description,
+            customer_name:         data.customer_name,
+            customer_surname:      data.customer_surname,
+            customer_email:        data.customer_email,
+            customer_phone_number: data.customer_phone_number,
+            customer_address:      data.customer_address,
+            customer_city:         data.customer_city,
+            customer_country:      data.customer_country,
+            customer_state:        data.customer_state,
+            customer_zip_code:     data.customer_zip_code,
+        });
+
+        CinetPay.waitResponse(function(d) {
+            if (d.status === 'ACCEPTED') {
+                window.location.href = CALLBACK_URL + '?transaction_id=' + d.transaction_id;
+            } else {
+                alert('Paiement annulé ou refusé.');
+                location.reload();
+            }
+        });
+
+        CinetPay.onError(function(d) {
+            alert('Erreur CinetPay : ' + (d.message || 'Inconnue'));
+        });
+    })
+    .catch(err => {
+        btn.disabled = false;
+        alert('Erreur réseau : ' + err.message);
+    });
+}
+</script>
 @endsection

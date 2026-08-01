@@ -97,3 +97,6 @@ Route::post('/paiement/total',   [CinetPayController::class, 'payerTotal'])->nam
 Route::post('/paiement/solde',   [CinetPayController::class, 'payerSolde'])->name('cinetpay.solde');
 Route::get('/paiement/callback', [CinetPayController::class, 'callback'])->name('cinetpay.callback');
 Route::post('/paiement/notify',  [CinetPayController::class, 'notify'])->name('cinetpay.notify');
+// Endpoint AJAX qui prépare la transaction et retourne site_id + transaction_id au SDK JS
+Route::post('/paiement/init',    [CinetPayController::class, 'initAjax'])->name('cinetpay.init');
+Route::post('/paiement/init-solde', [CinetPayController::class, 'initAjaxSolde'])->name('cinetpay.init.solde');
