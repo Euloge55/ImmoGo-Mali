@@ -279,16 +279,14 @@ class AdminWebController extends Controller
         }
 
         $request->validate([
-            'cinetpay_site_id' => 'required|string|max:100',
-            'cinetpay_api_key' => 'required|string|max:255',
-            'cinetpay_env'     => 'required|in:TEST,PROD',
+            'fedapay_secret_key' => 'required|string|max:255',
+            'fedapay_env'        => 'required|in:sandbox,live',
         ]);
 
         \App\Models\Agence::where('id_agence', session('admin')->id_agence)
                           ->update([
-                              'cinetpay_site_id' => $request->cinetpay_site_id,
-                              'cinetpay_api_key' => $request->cinetpay_api_key,
-                              'cinetpay_env'     => $request->cinetpay_env,
+                              'fedapay_secret_key' => $request->fedapay_secret_key,
+                              'fedapay_env'        => $request->fedapay_env,
                           ]);
 
         return redirect()->route('admin.paiement.config')

@@ -9,6 +9,7 @@ class Agence extends Model
         'id_superadmin', 'nom_agence', 'adresse_agence',
         'tel_agence', 'email', 'logo',
         'cinetpay_site_id', 'cinetpay_api_key', 'cinetpay_env',
+        'fedapay_secret_key', 'fedapay_env',
     ];
 
     public function superAdmin()

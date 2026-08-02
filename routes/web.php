@@ -5,7 +5,7 @@ use App\Http\Controllers\Web\BienWebController;
 use App\Http\Controllers\Web\ClientWebController;
 use App\Http\Controllers\Web\AdminWebController;
 use App\Http\Controllers\Web\SuperAdminWebController;
-use App\Http\Controllers\Web\CinetPayController;
+use App\Http\Controllers\Web\FedaPayWebController;
 
 // ═══════════════════════════════════
 // AUTHENTIFICATION
@@ -90,13 +90,9 @@ Route::delete('/superadmin/clients/{id}', [SuperAdminWebController::class, 'supp
 Route::get('/superadmin/contrats', [SuperAdminWebController::class, 'contrats'])->name('superadmin.contrats');
 
 // ═══════════════════════════════════
-// CINETPAY — Paiement mobile money Mali
+// FEDAPAY — Paiement mobile money
 // ═══════════════════════════════════
-Route::post('/paiement/acompte', [CinetPayController::class, 'payerAcompte'])->name('cinetpay.acompte');
-Route::post('/paiement/total',   [CinetPayController::class, 'payerTotal'])->name('cinetpay.total');
-Route::post('/paiement/solde',   [CinetPayController::class, 'payerSolde'])->name('cinetpay.solde');
-Route::get('/paiement/callback', [CinetPayController::class, 'callback'])->name('cinetpay.callback');
-Route::post('/paiement/notify',  [CinetPayController::class, 'notify'])->name('cinetpay.notify');
-// Endpoint AJAX qui prépare la transaction et retourne site_id + transaction_id au SDK JS
-Route::post('/paiement/init',    [CinetPayController::class, 'initAjax'])->name('cinetpay.init');
-Route::post('/paiement/init-solde', [CinetPayController::class, 'initAjaxSolde'])->name('cinetpay.init.solde');
+Route::post('/paiement/acompte', [FedaPayWebController::class, 'payerAcompte'])->name('fedapay.acompte');
+Route::post('/paiement/total',   [FedaPayWebController::class, 'payerTotal'])->name('fedapay.total');
+Route::post('/paiement/solde',   [FedaPayWebController::class, 'payerSolde'])->name('fedapay.solde');
+Route::get('/paiement/callback', [FedaPayWebController::class, 'callback'])->name('fedapay.callback');

@@ -193,7 +193,7 @@
                     <span class="ms-auto badge"
                           style="background:rgba(243,156,18,0.2);
                                  color:#f39c12; font-size:10px">
-                        CinetPay
+                        FedaPay
                     </span>
                 </a>
             @endif
@@ -315,3 +315,4 @@
 @yield('scripts')
 </body>
 </html>
+

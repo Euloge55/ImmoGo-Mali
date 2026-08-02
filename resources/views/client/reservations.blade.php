@@ -129,7 +129,7 @@
                 </div>
                 @endif
 
-                <!-- BOUTON PAYER SOLDE (CinetPay SDK JS) -->
+                <!-- BOUTON PAYER SOLDE (FedaPay SDK JS) -->
                 @if($contrat->statut_contrat == 'en_attente' && $solde > 0)
                 <div class="border-top pt-3">
                     <button type="button"
@@ -139,7 +139,7 @@
                         <i class="fas fa-credit-card me-2"></i>
                         Payer le solde restant
                         ({{ number_format($solde, 0, ',', ' ') }} CFA)
-                        via CinetPay
+                        via FedaPay
                     </button>
                 </div>
                 @endif
@@ -152,11 +152,11 @@
 @endsection
 
 @section('scripts')
-<script src="https://cdn.cinetpay.com/seamless/main.js"></script>
+<script src="https://www.FedaPay.com/cdn/seamless_sdk/latest/FedaPay.js"></script>
 <script>
 const CSRF_TOKEN_RES  = '{{ csrf_token() }}';
-const INIT_SOLDE_URL  = '{{ route("cinetpay.init.solde") }}';
-const CALLBACK_URL    = '{{ route("cinetpay.callback") }}';
+const INIT_SOLDE_URL  = '{{ route("fedapay.init.solde") }}';
+const CALLBACK_URL    = '{{ route("fedapay.callback") }}';
 
 function payerSolde(idContrat, btn) {
     btn.disabled = true;
@@ -174,11 +174,11 @@ function payerSolde(idContrat, btn) {
     .then(r => r.json())
     .then(data => {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Payer le solde via CinetPay';
+        btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Payer le solde via FedaPay';
 
         if (!data.success) { alert('Erreur : ' + data.message); return; }
 
-        CinetPay.setConfig({
+        FedaPay.setConfig({
             apikey:     data.apikey,
             site_id:    data.site_id,
             notify_url: data.notify_url,
@@ -186,7 +186,7 @@ function payerSolde(idContrat, btn) {
             mode:       'PRODUCTION',
         });
 
-        CinetPay.getCheckout({
+        FedaPay.getCheckout({
             transaction_id:        data.transaction_id,
             amount:                data.amount,
             currency:              data.currency,
@@ -203,7 +203,7 @@ function payerSolde(idContrat, btn) {
             customer_zip_code:     data.customer_zip_code,
         });
 
-        CinetPay.waitResponse(function(d) {
+        FedaPay.waitResponse(function(d) {
             if (d.status === 'ACCEPTED') {
                 window.location.href = CALLBACK_URL + '?transaction_id=' + d.transaction_id;
             } else {
@@ -212,8 +212,8 @@ function payerSolde(idContrat, btn) {
             }
         });
 
-        CinetPay.onError(function(d) {
-            alert('Erreur CinetPay : ' + (d.message || 'Inconnue'));
+        FedaPay.onError(function(d) {
+            alert('Erreur FedaPay : ' + (d.message || 'Inconnue'));
         });
     })
     .catch(err => {
@@ -223,3 +223,4 @@ function payerSolde(idContrat, btn) {
 }
 </script>
 @endsection
+

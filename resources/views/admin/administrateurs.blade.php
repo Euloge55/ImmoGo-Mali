@@ -115,7 +115,7 @@
                         <li>Gérer les biens (créer, modifier, supprimer)</li>
                         <li>Voir et gérer les réservations</li>
                         <li>Créer et supprimer des administrateurs assistants</li>
-                        <li>Configurer les clés de paiement CinetPay</li>
+                        <li>Configurer les clés de paiement FedaPay</li>
                     </ul>
                 </div>
             </div>
@@ -231,3 +231,4 @@
 
 @endif
 @endsection
+

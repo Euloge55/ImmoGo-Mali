@@ -269,33 +269,49 @@
                 @endif
 
                 @if($disponible && $connecte && $estLocation)
-                    <button type="button" class="btn w-100 py-3 fw-semibold mb-2"
-                            style="background:#4ECDC4;color:white;border-radius:12px"
-                            onclick="lancerPaiement('acompte', {{ $bien->id_bien }}, 'location')">
-                        <i class="fas fa-calendar-check me-2"></i>
-                        Réserver — Acompte ({{ number_format($totalEntree * 0.10, 0, ',', ' ') }} CFA)
-                    </button>
-                    <button type="button" class="btn w-100 py-3 fw-semibold btn-outline-success"
-                            style="border-radius:12px"
-                            onclick="lancerPaiement('complet', {{ $bien->id_bien }}, 'location')">
-                        <i class="fas fa-credit-card me-2"></i>
-                        Payer la totalité ({{ number_format($totalEntree, 0, ',', ' ') }} CFA)
-                    </button>
+                    <form action="{{ route('fedapay.acompte') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
+                        <input type="hidden" name="type_contrat" value="location">
+                        <button type="submit" class="btn w-100 py-3 fw-semibold mb-2"
+                                style="background:#4ECDC4;color:white;border-radius:12px">
+                            <i class="fas fa-calendar-check me-2"></i>
+                            Réserver — Acompte ({{ number_format($totalEntree * 0.10, 0, ',', ' ') }} CFA)
+                        </button>
+                    </form>
+                    <form action="{{ route('fedapay.total') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
+                        <input type="hidden" name="type_contrat" value="location">
+                        <button type="submit" class="btn w-100 py-3 fw-semibold btn-outline-success"
+                                style="border-radius:12px">
+                            <i class="fas fa-credit-card me-2"></i>
+                            Payer la totalité ({{ number_format($totalEntree, 0, ',', ' ') }} CFA)
+                        </button>
+                    </form>
                 @endif
 
                 @if($disponible && $connecte && !$estLocation)
-                    <button type="button" class="btn w-100 py-3 fw-semibold mb-2"
-                            style="background:#4ECDC4;color:white;border-radius:12px"
-                            onclick="lancerPaiement('acompte', {{ $bien->id_bien }}, 'vente')">
-                        <i class="fas fa-calendar-check me-2"></i>
-                        Réserver — Acompte 10% ({{ number_format($bien->prix * 0.10, 0, ',', ' ') }} CFA)
-                    </button>
-                    <button type="button" class="btn w-100 py-3 fw-semibold btn-outline-success"
-                            style="border-radius:12px"
-                            onclick="lancerPaiement('complet', {{ $bien->id_bien }}, 'vente')">
-                        <i class="fas fa-credit-card me-2"></i>
-                        Payer la totalité ({{ number_format($bien->prix, 0, ',', ' ') }} CFA)
-                    </button>
+                    <form action="{{ route('fedapay.acompte') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
+                        <input type="hidden" name="type_contrat" value="vente">
+                        <button type="submit" class="btn w-100 py-3 fw-semibold mb-2"
+                                style="background:#4ECDC4;color:white;border-radius:12px">
+                            <i class="fas fa-calendar-check me-2"></i>
+                            Réserver — Acompte 10% ({{ number_format($bien->prix * 0.10, 0, ',', ' ') }} CFA)
+                        </button>
+                    </form>
+                    <form action="{{ route('fedapay.total') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="id_bien" value="{{ $bien->id_bien }}">
+                        <input type="hidden" name="type_contrat" value="vente">
+                        <button type="submit" class="btn w-100 py-3 fw-semibold btn-outline-success"
+                                style="border-radius:12px">
+                            <i class="fas fa-credit-card me-2"></i>
+                            Payer la totalité ({{ number_format($bien->prix, 0, ',', ' ') }} CFA)
+                        </button>
+                    </form>
                 @endif
 
             </div>
@@ -387,21 +403,14 @@
 @endsection
 
 @section('scripts')
-<script src="https://cdn.cinetpay.com/seamless/main.js"></script>
 <script>
-const CSRF_TOKEN = '{{ csrf_token() }}';
-const INIT_URL   = '{{ route("cinetpay.init") }}';
-const RETURN_URL = '{{ route("cinetpay.callback") }}';
-
-function lancerPaiement(typePaiement, idBien, typeContrat) {
-    const btn = event.target;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Chargement...';
-
-    fetch(INIT_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
+function changeMainImage(thumbnail, src) {
+    document.getElementById('mainImage').src = src;
+    document.querySelectorAll('.thumbnail-img').forEach(img => img.classList.remove('active'));
+    thumbnail.classList.add('active');
+}
+</script>
+@endsection
             'X-CSRF-TOKEN': CSRF_TOKEN,
             'Accept': 'application/json',
         },
@@ -422,8 +431,8 @@ function lancerPaiement(typePaiement, idBien, typeContrat) {
             return;
         }
 
-        // Lancer la popup CinetPay SDK
-        CinetPay.setConfig({
+        // Lancer la popup FedaPay SDK
+        FedaPay.setConfig({
             apikey:      data.apikey,
             site_id:     data.site_id,
             notify_url:  data.notify_url,
@@ -431,7 +440,7 @@ function lancerPaiement(typePaiement, idBien, typeContrat) {
             mode:        'PRODUCTION',
         });
 
-        CinetPay.getCheckout({
+        FedaPay.getCheckout({
             transaction_id:        data.transaction_id,
             amount:                data.amount,
             currency:              data.currency,
@@ -448,7 +457,7 @@ function lancerPaiement(typePaiement, idBien, typeContrat) {
             customer_zip_code:     data.customer_zip_code,
         });
 
-        CinetPay.waitResponse(function(data) {
+        FedaPay.waitResponse(function(data) {
             if (data.status === 'ACCEPTED') {
                 window.location.href = RETURN_URL + '?transaction_id=' + data.transaction_id;
             } else {
@@ -457,8 +466,8 @@ function lancerPaiement(typePaiement, idBien, typeContrat) {
             }
         });
 
-        CinetPay.onError(function(data) {
-            alert('Erreur CinetPay : ' + (data.message || 'Inconnue'));
+        FedaPay.onError(function(data) {
+            alert('Erreur FedaPay : ' + (data.message || 'Inconnue'));
             location.reload();
         });
     })
@@ -477,3 +486,4 @@ function changeMainImage(thumbnail, src) {
 }
 </script>
 @endsection
+
