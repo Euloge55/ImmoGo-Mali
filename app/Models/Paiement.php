@@ -10,6 +10,10 @@ class Paiement extends Model
         'date_paiement', 'type_paiement', 'reference'
     ];
 
+    protected $casts = [
+        'date_paiement' => 'datetime',
+    ];
+
     public function contrat()
     {
         return $this->belongsTo(Contrat::class, 'id_contrat', 'id_contrat');
