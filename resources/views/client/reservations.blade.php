@@ -132,15 +132,18 @@
                 <!-- BOUTON PAYER SOLDE (FedaPay SDK JS) -->
                 @if($contrat->statut_contrat == 'en_attente' && $solde > 0)
                 <div class="border-top pt-3">
-                    <button type="button"
-                            class="btn fw-semibold w-100"
-                            style="background:#4ECDC4;color:white;border-radius:10px"
-                            onclick="payerSolde({{ $contrat->id_contrat }}, this)">
-                        <i class="fas fa-credit-card me-2"></i>
-                        Payer le solde restant
-                        ({{ number_format($solde, 0, ',', ' ') }} CFA)
-                        via FedaPay
-                    </button>
+                    <form action="{{ route('fedapay.solde') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="id_contrat" value="{{ $contrat->id_contrat }}">
+                        <button type="submit"
+                                class="btn fw-semibold w-100"
+                                style="background:#4ECDC4;color:white;border-radius:10px">
+                            <i class="fas fa-credit-card me-2"></i>
+                            Payer le solde restant
+                            ({{ number_format($solde, 0, ',', ' ') }} CFA)
+                            via FedaPay
+                        </button>
+                    </form>
                 </div>
                 @endif
 
@@ -152,74 +155,11 @@
 @endsection
 
 @section('scripts')
-<script src="https://www.FedaPay.com/cdn/seamless_sdk/latest/FedaPay.js"></script>
 <script>
-const CSRF_TOKEN_RES  = '{{ csrf_token() }}';
-const INIT_SOLDE_URL  = '{{ route("fedapay.init.solde") }}';
-const CALLBACK_URL    = '{{ route("fedapay.callback") }}';
-
-function payerSolde(idContrat, btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Chargement...';
-
-    fetch(INIT_SOLDE_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': CSRF_TOKEN_RES,
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({ id_contrat: idContrat })
-    })
-    .then(r => r.json())
-    .then(data => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Payer le solde via FedaPay';
-
-        if (!data.success) { alert('Erreur : ' + data.message); return; }
-
-        FedaPay.setConfig({
-            apikey:     data.apikey,
-            site_id:    data.site_id,
-            notify_url: data.notify_url,
-            return_url: data.return_url,
-            mode:       'PRODUCTION',
-        });
-
-        FedaPay.getCheckout({
-            transaction_id:        data.transaction_id,
-            amount:                data.amount,
-            currency:              data.currency,
-            channels:              data.channels,
-            description:           data.description,
-            customer_name:         data.customer_name,
-            customer_surname:      data.customer_surname,
-            customer_email:        data.customer_email,
-            customer_phone_number: data.customer_phone_number,
-            customer_address:      data.customer_address,
-            customer_city:         data.customer_city,
-            customer_country:      data.customer_country,
-            customer_state:        data.customer_state,
-            customer_zip_code:     data.customer_zip_code,
-        });
-
-        FedaPay.waitResponse(function(d) {
-            if (d.status === 'ACCEPTED') {
-                window.location.href = CALLBACK_URL + '?transaction_id=' + d.transaction_id;
-            } else {
-                alert('Paiement annulé ou refusé.');
-                location.reload();
-            }
-        });
-
-        FedaPay.onError(function(d) {
-            alert('Erreur FedaPay : ' + (d.message || 'Inconnue'));
-        });
-    })
-    .catch(err => {
-        btn.disabled = false;
-        alert('Erreur réseau : ' + err.message);
-    });
+function changeMainImage(thumbnail, src) {
+    document.getElementById('mainImage').src = src;
+    document.querySelectorAll('.thumbnail-img').forEach(img => img.classList.remove('active'));
+    thumbnail.classList.add('active');
 }
 </script>
 @endsection
