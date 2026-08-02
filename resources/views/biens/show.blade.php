@@ -187,7 +187,7 @@
                     $avance      = $bien->prix * ($bien->nb_mois_avance ?? 0);
                     $eau         = (float)($bien->caution_eau ?? 0);
                     $elec        = (float)($bien->caution_electricite ?? 0);
-                    $totalEntree = $bien->prix + $avance + $eau + $elec;
+                    $totalEntree = $avance + $eau + $elec;
                     $estLocation = ($bien->type_contrat === 'location');
                     $aConditions = $estLocation && ($bien->nb_mois_avance || $eau || $elec);
                     $disponible  = ($bien->statut === 'disponible');
@@ -224,12 +224,12 @@
                         <i class="fas fa-receipt me-1" style="color:#4ECDC4"></i>Conditions d'entrée
                     </p>
                     <div class="d-flex justify-content-between small mb-1">
-                        <span class="text-muted">1 mois loyer</span>
-                        <span class="fw-semibold">{{ number_format($bien->prix, 0, ',', ' ') }} CFA</span>
+                        <span class="text-muted">Loyer mensuel</span>
+                        <span class="fw-semibold">{{ number_format($bien->prix, 0, ',', ' ') }} CFA/mois</span>
                     </div>
                     @if($bien->nb_mois_avance)
                     <div class="d-flex justify-content-between small mb-1">
-                        <span class="text-muted">{{ $bien->nb_mois_avance }} mois d'avance</span>
+                        <span class="text-muted">Avance ({{ $bien->nb_mois_avance }} mois × {{ number_format($bien->prix, 0, ',', ' ') }})</span>
                         <span class="fw-semibold">{{ number_format($avance, 0, ',', ' ') }} CFA</span>
                     </div>
                     @endif
@@ -247,7 +247,7 @@
                     @endif
                     <hr class="my-2">
                     <div class="d-flex justify-content-between">
-                        <span class="fw-bold">Total à l'entrée</span>
+                        <span class="fw-bold">Total à payer à l'entrée</span>
                         <span class="fw-bold" style="color:#4ECDC4">{{ number_format($totalEntree, 0, ',', ' ') }} CFA</span>
                     </div>
                 </div>

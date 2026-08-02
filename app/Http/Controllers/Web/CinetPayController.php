@@ -41,11 +41,10 @@ class CinetPayController extends Controller
     private function getMontantTotal(Bien $bien): int
     {
         if ($bien->type_contrat === 'location') {
-            $loyer  = $bien->prix;
-            $avance = $loyer * ($bien->nb_mois_avance ?? 0);
+            $avance = $bien->prix * ($bien->nb_mois_avance ?? 0);
             $eau    = (float) ($bien->caution_eau ?? 0);
             $elec   = (float) ($bien->caution_electricite ?? 0);
-            return (int) round($loyer + $avance + $eau + $elec);
+            return (int) round($avance + $eau + $elec);
         }
         return (int) round($bien->prix);
     }

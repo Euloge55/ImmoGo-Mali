@@ -384,17 +384,18 @@ function calculerTotalCreer() {
     const mois    = parseInt(document.getElementById('nbMoisCreer').value) || 0;
     const eau     = parseFloat(document.getElementById('cautionEauCreer').value) || 0;
     const elec    = parseFloat(document.getElementById('cautionElecCreer').value) || 0;
+    // Total = avance (loyer × mois) + cautions — le loyer mensuel N'EST PAS ajouté séparément
     const avance  = loyer * mois;
     const total   = avance + eau + elec;
     const box     = document.getElementById('totalBoxCreer');
     box.style.display = (loyer > 0) ? 'block' : 'none';
     let details = '';
-    if (loyer > 0) details += `<div class="col-6">Loyer x1 mois</div><div class="col-6 text-end fw-semibold">${fmt(loyer)} CFA</div>`;
-    if (mois > 0)  details += `<div class="col-6">Avance (${mois} mois)</div><div class="col-6 text-end fw-semibold">${fmt(avance)} CFA</div>`;
+    if (loyer > 0) details += `<div class="col-6">Loyer mensuel</div><div class="col-6 text-end fw-semibold">${fmt(loyer)} CFA/mois</div>`;
+    if (mois > 0)  details += `<div class="col-6">Avance (${mois} mois × ${fmt(loyer)})</div><div class="col-6 text-end fw-semibold">${fmt(avance)} CFA</div>`;
     if (eau > 0)   details += `<div class="col-6">Caution eau</div><div class="col-6 text-end fw-semibold">${fmt(eau)} CFA</div>`;
     if (elec > 0)  details += `<div class="col-6">Caution électricité</div><div class="col-6 text-end fw-semibold">${fmt(elec)} CFA</div>`;
     document.getElementById('detailsTotalCreer').innerHTML = details;
-    document.getElementById('totalCreer').textContent = fmt(total + loyer);
+    document.getElementById('totalCreer').textContent = fmt(total);
 }
 
 // ─── Toggle formulaire Modifier ──────────────────────
@@ -410,13 +411,14 @@ function calculerTotalModifier(id) {
     const eau    = parseFloat(document.getElementById('cautionEauMod'+id)?.value) || 0;
     const elec   = parseFloat(document.getElementById('cautionElecMod'+id)?.value) || 0;
     const avance = loyer * mois;
+    const total  = avance + eau + elec;
     let details = '';
-    if (loyer > 0) details += `<div class="col-6">Loyer x1 mois</div><div class="col-6 text-end fw-semibold">${fmt(loyer)} CFA</div>`;
-    if (mois > 0)  details += `<div class="col-6">Avance (${mois} mois)</div><div class="col-6 text-end fw-semibold">${fmt(avance)} CFA</div>`;
+    if (loyer > 0) details += `<div class="col-6">Loyer mensuel</div><div class="col-6 text-end fw-semibold">${fmt(loyer)} CFA/mois</div>`;
+    if (mois > 0)  details += `<div class="col-6">Avance (${mois} mois × ${fmt(loyer)})</div><div class="col-6 text-end fw-semibold">${fmt(avance)} CFA</div>`;
     if (eau > 0)   details += `<div class="col-6">Caution eau</div><div class="col-6 text-end fw-semibold">${fmt(eau)} CFA</div>`;
     if (elec > 0)  details += `<div class="col-6">Caution électricité</div><div class="col-6 text-end fw-semibold">${fmt(elec)} CFA</div>`;
     document.getElementById('detailsTotalMod'+id).innerHTML = details;
-    document.getElementById('totalMod'+id).textContent = fmt(loyer + avance + eau + elec);
+    document.getElementById('totalMod'+id).textContent = fmt(total);
 }
 
 function fmt(n) { return Math.round(n).toLocaleString('fr-FR'); }
