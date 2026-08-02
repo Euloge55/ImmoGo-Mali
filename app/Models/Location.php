@@ -10,6 +10,11 @@ class Location extends Model
         'date_reserv_location', 'date_limite_solde_location'
     ];
 
+    protected $casts = [
+        'date_reserv_location'       => 'datetime',
+        'date_limite_solde_location' => 'datetime',
+    ];
+
     public function contrat()
     {
         return $this->belongsTo(Contrat::class, 'id_contrat', 'id_contrat');

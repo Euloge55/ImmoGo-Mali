@@ -10,6 +10,11 @@ class Vente extends Model
         'date_reserv_vente', 'date_limite_solde_vente'
     ];
 
+    protected $casts = [
+        'date_reserv_vente'       => 'datetime',
+        'date_limite_solde_vente' => 'datetime',
+    ];
+
     public function contrat()
     {
         return $this->belongsTo(Contrat::class, 'id_contrat', 'id_contrat');

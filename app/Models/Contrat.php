@@ -10,6 +10,10 @@ class Contrat extends Model
         'type_contrat', 'statut_contrat', 'date_location'
     ];
 
+    protected $casts = [
+        'date_location' => 'datetime',
+    ];
+
     public function client()
     {
         return $this->belongsTo(Client::class, 'id_client', 'id_client');
