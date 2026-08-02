@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title', 'Inscription')
 
 @section('content')
@@ -13,7 +13,7 @@
                     <div class="text-center mb-4">
                         <i class="fas fa-user-plus fa-3x mb-3" style="color: #4ECDC4"></i>
                         <h2 class="fw-bold">Créer un compte</h2>
-                        <p class="text-muted">Rejoignez ImmoGo dès maintenant</p>
+                        <p class="text-muted">Rejoignez IMMO-Mali dès maintenant</p>
                     </div>
 
                     <!-- FORMULAIRE -->

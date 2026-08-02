@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -120,7 +120,7 @@
     <div class="sidebar-brand">
         <div class="d-flex align-items-center mb-2">
             <i class="fas fa-building fa-lg me-2" style="color:#4ECDC4"></i>
-            <h5 class="text-white fw-bold mb-0">ImmoGo</h5>
+            <h5 class="text-white fw-bold mb-0">IMMO-Mali</h5>
         </div>
         <div class="d-flex align-items-center mt-3">
             <div class="sidebar-avatar me-3">

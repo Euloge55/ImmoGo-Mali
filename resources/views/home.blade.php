@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title', 'Accueil')
 
 @section('styles')
@@ -462,12 +462,12 @@
 <!-- ═══ POURQUOI NOUS ═══ -->
 <section class="py-5 bg-white">
     <div class="container">
-        <h2 class="section-title text-center mb-2">Pourquoi choisir ImmoGo ?</h2>
+        <h2 class="section-title text-center mb-2">Pourquoi choisir IMMO-Mali ?</h2>
         <p class="text-center text-muted mb-5">
             La plateforme immobilière de référence au Mali
         </p>
-        <div class="row g-4">
-            <div class="col-md-4 text-center p-4">
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-5 text-center p-4">
                 <div class="rounded-circle d-inline-flex align-items-center
                             justify-content-center mb-4"
                      style="width:80px; height:80px; background:#e8fffe">
@@ -476,7 +476,7 @@
                 <h5 class="fw-bold">Fiable et sécurisé</h5>
                 <p class="text-muted">Toutes les agences sont vérifiées.</p>
             </div>
-            <div class="col-md-4 text-center p-4">
+            <div class="col-md-5 text-center p-4">
                 <div class="rounded-circle d-inline-flex align-items-center
                             justify-content-center mb-4"
                      style="width:80px; height:80px; background:#e8fffe">
@@ -484,15 +484,6 @@
                 </div>
                 <h5 class="fw-bold">Partout au Mali</h5>
                 <p class="text-muted">Biens disponibles dans toutes les régions du Mali.</p>
-            </div>
-            <div class="col-md-4 text-center p-4">
-                <div class="rounded-circle d-inline-flex align-items-center
-                            justify-content-center mb-4"
-                     style="width:80px; height:80px; background:#e8fffe">
-                    <i class="fas fa-mobile-alt fa-2x" style="color:#4ECDC4"></i>
-                </div>
-                <h5 class="fw-bold">Application mobile</h5>
-                <p class="text-muted">Disponible sur Android et iOS.</p>
             </div>
         </div>
     </div>

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title', 'Connexion Super Admin')
 
 @section('content')
@@ -43,7 +43,7 @@
                                    id="email"
                                    class="form-control"
                                    value="{{ old('email') }}"
-                                   placeholder="superadmin@immogo.com"
+                                   placeholder="superadmin@IMMO-Mali.com"
                                    autocomplete="email"
                                    required>
                         </div>
